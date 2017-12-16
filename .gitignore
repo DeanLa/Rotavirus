@@ -1,3 +1,9 @@
+.idea/
+z_*
+/log/
+.dropbox
+/chains/
+*.pkl
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
