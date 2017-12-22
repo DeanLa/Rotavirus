@@ -1,2 +1,2 @@
-# RSV
-Japan RSV transmission
+# Rotavirus
+Japan Rotavirus transmission

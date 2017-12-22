@@ -1,3 +1,5 @@
-from rsv import *
-rsv = RSV('chain_01')
-print (rsv.test)
+if __name__ == '__main__':
+    from rota import *
+
+    rota = Rota('chain_01')
+
