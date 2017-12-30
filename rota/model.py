@@ -1,7 +1,7 @@
 from scipy.stats import uniform
 from tqdm import trange, tqdm
 import logging
-
+import numpy as np
 from rota import *
 logger = logging.getLogger(__name__)
 class Stochastic(object):
@@ -45,8 +45,9 @@ class Disease(object):
         self.sigma = 1
         self.state_0 = None
         self.start = None
+        self.years_prior = None
         self.end = None
-
+        self.fixed = None
         # Initial Values
         self.values = [s.value for s in self.stochastics]
         self.initial_values = [s.value for s in self.stochastics]
@@ -118,15 +119,16 @@ class Disease(object):
         return (f"{self.name}\n{self.names}\n{self.values}")
     __repr__ = __str__
 
-class Rota(Disease, RotaData):
+class Rota(Disease):
 
     def __init__(self, name, stochastics, populate_values, eq_func):
         super(Rota, self).__init__(name, stochastics)
-        RotaData.__init__(self)
         self.stochastics = stochastics
         self.equations = eq_func
 
         # self.get_data()
+        fixed = RotaData()
+        self.state_0 = collect_state_0(fixed)
         self.populate(populate_values)
 
     # def run_equations(self):
@@ -154,7 +156,8 @@ class Chains(object):
 if __name__ == '__main__':
     logger.info("start")
     z = Stochastic('z', 0, 1, .5)
-    d = {'t':5,'scaling_factor':0.2}
-    x = Rota('x', [z], d, rota_eq)
+    extra = {'t':5,'scaling_factor':0.2}
+    x = Rota('x', [z], extra, rota_eq)
+    rota_eq(x)
     print(type(x))
     print(Chains(12, 12, 55, 12).chains)
