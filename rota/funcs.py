@@ -13,7 +13,17 @@ def log_likelihood(model, data, sigma=1, noise=150):
     LL = -diff / (2 * sigma ** 2)
     return LL.sum()
 
+def nums(scalar, amount):
+    return np.ones(amount) * scalar
 
+def concat_nums(*args):
+    n = len(args)
+    assert n % 2 == 0, "Even number of args NOT GOOD: {}".format(n)
+    iter = np.arange(0, n, 2)
+    pairs = []
+    for i in iter:
+        pairs.append(nums(args[i],args[i+1]))
+    return np.concatenate(pairs)
 
 def gelman_rubin(chains):
     """http://blog.stata.com/2016/05/26/gelman-rubin-convergence-diagnostic-using-multiple-chains/"""

@@ -3,6 +3,8 @@ from tqdm import trange, tqdm
 import logging
 import numpy as np
 from rota import *
+from rota import rota_eq
+
 logger = logging.getLogger(__name__)
 class Stochastic(object):
     def __init__(self, name, a, b, initial=None):
@@ -67,10 +69,15 @@ class Disease(object):
         self.gelman_rubin = np.zeros((0,self.d))
         self.change = np.ones((0))
         self.ll_history = np.ones((0,2))
-
+        # Stochastics
+        self.get_stochastics(self.stochastics)
+        #
         self.populate(kwargs)
         self.compute_jump()
 
+    def get_stochastics(self, stochastics):
+        for var in stochastics:
+            setattr(self, var.name, var.value)
 
     def compute_jump(self, scaling_stop_after = 10000, sd_stop_after = 10000):
         # Model Specific
@@ -155,9 +162,16 @@ class Chains(object):
 
 if __name__ == '__main__':
     logger.info("start")
-    z = Stochastic('z', 0, 1, .5)
+    # z = Stochastic('z', 0, 1, .5)
+    b1 = Stochastic('b1', 0, 2)
+    b2 = Stochastic('b2', 0, 2)
+    b3 = Stochastic('b3', 0, 2)
+    b4 = Stochastic('b4', 0, 2)
+    b5 = Stochastic('b5', 0, 2)
+    phi = Stochastic('phi', 0, 2 * np.pi)
+    vars = [b1,b2,b3,b4,b5,phi]
     extra = {'t':5,'scaling_factor':0.2}
-    x = Rota('x', [z], extra, rota_eq)
+    x = Rota('x', vars, extra, rota_eq)
     rota_eq(x)
     print(type(x))
     print(Chains(12, 12, 55, 12).chains)

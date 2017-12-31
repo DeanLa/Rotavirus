@@ -10,12 +10,14 @@ class RotaData(ClinicalData):
         self.steps = steps_in_year
         self.N = 1 / steps_in_year
         # Age
-        self.ages = np.array((0, 2 / 12, 4 / 12, 6 / 12, 1, 2, 3, 4, 5, 15, 20, 30, 50, 65, 85))
+        self.ages = np.array((0, 2 / 12, 4 / 12, 6 / 12, 1, 2, 3, 4, 5, 15, 20, 30, 50, 65, 100))
         self.a_u = self.ages[1:]
         self.a_l = self.ages[:-1]
         self.a = (self.a_u - self.a_l)
         self.age_dist = self.a / self.a.sum()
         self.J = len(self.a)  # num age groups
+        self.age_union = np.array([4,1,3,1,5])
+
         # Death Rate
         self.mu = np.array((3, 3, 3, 3,
                             0.5, 0.25, 0.251, 0.251,
@@ -33,7 +35,7 @@ class RotaData(ClinicalData):
         self.delta *= self.N
 
         # Contact Mixing
-        self.C = np.genfromtxt('./data/contact-mixing.csv', delimiter='\t',dtype=np.float32) * self.N
+        self.C = np.genfromtxt('./data/contact-mixing.csv', delimiter='\t', dtype=np.float32) * self.N
 
         # Probability of severity given infection
         self.rhoa1, self.rhom1, self.rhos1 = 0.53, 0.34, 0.133
@@ -41,18 +43,27 @@ class RotaData(ClinicalData):
         self.rhoa3, self.rhom3, self.rhos3 = 0.8, 0.2, 0.0
 
         # Duration of infection (days)
-        self.gamma1 = self.N * (365 / 7)
-        self.gamma2 = self.N * (365 / 3.5)
-        self.gamma3 = self.gamma2
+        high = self.N * (365 / 7)
+        low = self.N * (365 / 3.5)
+        self.gammaa1 = low
+        self.gammam1 = high
+        self.gammas1 = high
+        self.gammaa2 = low
+        self.gammam2 = low
+        self.gammas2 = low
+        self.gammaa3 = low
+        self.gammam3 = low
+        self.gammas3 = low
 
         # Relative infectiousness
         self.psia1, self.psim1, self.psis1 = 0.1, 1.0, 1.0
         self.psia2, self.psim2, self.psis2 = 0.1, 0.5, 0.8
         self.psia3, self.psim3, self.psis3 = self.psia2, self.psim2, self.psis2
 
-        # Relative susceptability following
-        self.phi1 = 0.62
-        self.phi2 = 0.37
+        # Relative susceptability following:
+        self.phi1 = 0.62 # Primarty infection
+        self.phi2 = 0.37 # Second and subsequent infection
+        self.phi3 = self.phi2
 
         # Duration of immunity (Months)
         self.omega0 = self.N * (12 / 3)
