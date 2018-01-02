@@ -14,7 +14,7 @@ class RotaData(ClinicalData):
         self.a_u = self.ages[1:]
         self.a_l = self.ages[:-1]
         self.a = (self.a_u - self.a_l)
-        self.age_dist = self.a / self.a.sum()
+        # self.age_dist = self.a / self.a.sum()
         self.J = len(self.a)  # num age groups
         self.age_union = np.array([4,1,3,1,5])
 
@@ -25,9 +25,16 @@ class RotaData(ClinicalData):
                             3.558, 22.2)) / 1000
         # Age transition
         self.d = self.mu / (np.e ** (self.mu * self.a) - 1)
+        self.d[-1] = 0
         mu_d = self.mu + self.d
         tmp = self.d[:-1] / mu_d[1:]
         self.delta = (mu_d[0]) / (1 + tmp.cumprod().sum())
+
+        n0 = self.delta / mu_d[0]
+        age_dist = np.append(n0, np.zeros((self.J - 1)))
+        for i in range(1, self.J):
+            age_dist[i] = self.d[i - 1] * age_dist[i - 1] / mu_d[i]
+        self.age_dist = age_dist
 
         # Set to relevant rate
         self.mu *= self.N
@@ -35,10 +42,10 @@ class RotaData(ClinicalData):
         self.delta *= self.N
 
         # Contact Mixing
-        self.C = np.genfromtxt('./data/contact-mixing.csv', delimiter='\t', dtype=np.float32) * self.N
+        self.C = 365 * np.genfromtxt('./data/contact-mixing.csv', delimiter='\t', dtype=np.float32) * self.N
 
         # Probability of severity given infection
-        self.rhoa1, self.rhom1, self.rhos1 = 0.53, 0.34, 0.133
+        self.rhoa1, self.rhom1, self.rhos1 = 0.53, 0.34, 0.13
         self.rhoa2, self.rhom2, self.rhos2 = 0.75, 0.22, 0.03
         self.rhoa3, self.rhom3, self.rhos3 = 0.8, 0.2, 0.0
 
@@ -61,9 +68,9 @@ class RotaData(ClinicalData):
         self.psia3, self.psim3, self.psis3 = self.psia2, self.psim2, self.psis2
 
         # Relative susceptability following:
-        self.phi1 = 0.62 # Primarty infection
-        self.phi2 = 0.37 # Second and subsequent infection
-        self.phi3 = self.phi2
+        self.phi1 = 1 # Primarty infection
+        self.phi2 = 0.62 # Second and subsequent infection
+        self.phi3 = 0.37
 
         # Duration of immunity (Months)
         self.omega0 = self.N * (12 / 3)
@@ -73,11 +80,9 @@ class RotaData(ClinicalData):
 
         # State_0
 
-        # n0 = self.delta / mu_d[0]
-        # age_dist = np.append(n0, np.zeros((self.J - 1)))
-        # for i in range (1, self.J):
-        #     age_dist[i] = self.d[i-1] * age_dist[i-1] / mu_d[i]
-        # self.age_dist = age_dist
+
+        # self.age_dist = self.a / self.a.sum()
+        #
 
         # helper = 0
         # for i in range(1, self.J):

@@ -1,9 +1,9 @@
 from scipy.stats import uniform
-from tqdm import trange, tqdm
+# from tqdm import trange, tqdm
 import logging
 import numpy as np
 from rota import *
-from rota import rota_eq
+from rota import rota_eq, RotaData
 
 logger = logging.getLogger(__name__)
 class Stochastic(object):
