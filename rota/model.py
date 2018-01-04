@@ -4,6 +4,7 @@ import logging
 import numpy as np
 from rota import *
 from rota import rota_eq
+from functools import partial
 
 logger = logging.getLogger(__name__)
 class Stochastic(object):
@@ -131,18 +132,18 @@ class Rota(Disease):
     def __init__(self, name, stochastics, populate_values, eq_func):
         super(Rota, self).__init__(name, stochastics)
         self.stochastics = stochastics
-        self.equations = eq_func
+        self.equations = partial(rota_eq, self)
 
         # self.get_data()
         fixed = RotaData()
         self.state_0 = collect_state_0(fixed)
         self.populate(populate_values)
 
-    # def run_equations(self):
-    #     self.equations()
+    def run_equations(self):
+        self.equations()
 
     def run_model(self):
-        self.equations(self)
+        self.equations()
 
     def get_data(self):
         self.xdata = np.arange(5)
@@ -172,6 +173,7 @@ if __name__ == '__main__':
     vars = [b1,b2,b3,b4,b5,phi]
     extra = {'t':5,'scaling_factor':0.2}
     x = Rota('x', vars, extra, rota_eq)
-    rota_eq(x)
+    x.equations()
+    # rota_eq(x)
     print(type(x))
     print(Chains(12, 12, 55, 12).chains)

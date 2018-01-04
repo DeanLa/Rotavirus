@@ -19,7 +19,7 @@ if __name__ == '__main__':
     vars = [b1, b2, b3, b4, b5, offset]
     extra = {'start': 0, 'end': 10, 'scaling_factor': 0.2, 'years_prior': 10}
     x = Rota('x', vars, extra, rota_eq)
-    r = rota_eq(x,)
+    r = x.run_equations()
     A = sum(r)
     A = pd.DataFrame(A.T, columns=RotaData().a_l)
     print(type(x))
