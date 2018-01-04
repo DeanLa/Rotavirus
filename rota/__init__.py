@@ -1,7 +1,7 @@
 # INITIAL
 from .config import *
 from .funcs import *
-from .stopwatch import *
+# from .stopwatch import *
 # MODEL
 # from .parameters import *
 from .data import *

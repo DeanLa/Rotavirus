@@ -1,5 +1,5 @@
 from scipy.stats import uniform
-from tqdm import trange, tqdm
+# from tqdm import trange, tqdm
 import logging
 import numpy as np
 from rota import *

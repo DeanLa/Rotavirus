@@ -11,13 +11,13 @@ COMP = namedtuple("Compartments",
 
 def collect_state_0(fixed: RotaData):
     dist = fixed.age_dist
-    M = 0.0
+    M = 0.01
     R = 0.4
     S = 0.5
     I = 1 - M - S - R
     c = COMP._make(dist * 0 for _ in COMP._fields)
     assert type(c) == COMP
-    c.M[:] += dist * M
+    c.M[:] = dist * M
     c.R1[:] = dist * R * 3 / 45
     c.R2[:] = dist * R * 18 / 45
     c.R3[:] = dist * R * 24 / 45
@@ -47,7 +47,7 @@ def rota_eq(mcmc, start=None, end=None, state_0=None):
     if start is None: start = m.start
     if end is None: end = m.end
     if state_0 is None: state_0 = m.state_0
-    d = RotaData()
+    d = RotaData(365)
     no_likelihood = ''
     timeline = np.arange(start, end, d.N)
     num_steps = len(timeline)
@@ -60,9 +60,9 @@ def rota_eq(mcmc, start=None, end=None, state_0=None):
     assert len(b) == d.J
     # print (b)
     for t, T in enumerate(timeline[1:], start=1):
-        print (t,'--------')
+        print(t, '--------')
         n: COMP = COMP._make([np.maximum(0, comp[:, t - 1]) for comp in c])
-        print ("n", sum(n).sum())
+        print("n", sum(n).sum())
         for i in iter_comps:
             c[i][:, t] = c[i][:, t - 1]
         nI = d.psia1 * n.Ia1 + d.psim1 * n.Im2 + d.psis1 + n.Is1 + \
@@ -126,12 +126,12 @@ def rota_eq(mcmc, start=None, end=None, state_0=None):
 
         # Death and Aging
         for i in iter_comps:
-            c[i][:-1, t] -= d.d[1:] * c[i][:-1, t - 1]  # OUT
-            c[i][1:, t] += d.d[1:] * c[i][:-1, t - 1]  # IN
+            c[i][:-1, t] -= d.d[:-1] * c[i][:-1, t - 1]  # OUT
+            c[i][1:, t] += d.d[:-1] * c[i][:-1, t - 1]  # IN
             c[i][:, t] -= d.mu * c[i][:, t - 1]  # Death
         A = [comp[:, t] for comp in c]
         # print (sum(A))
-        print ("A", sum(A).sum())
+        print("A", sum(A).sum())
         if sum(A).sum() is np.nan:
             print("OH NO")
             raise AssertionError
