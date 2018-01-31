@@ -1,8 +1,8 @@
-from collections import namedtuple
-
-import numpy as np
-# from .model import Rota, RotaData
 from rota import *
+from collections import namedtuple
+import numpy as np
+
+# from rota import RotaData
 
 COMP = namedtuple("Compartments",
                   '''M S1 Ia1 Im1 Is1 R1 S2 Ia2 Im2 Is2 R2 S3 Ia3 Im3 Is3 R3 
@@ -38,16 +38,21 @@ def collect_state_0(fixed: RotaData):
     return c
 
 
+def make_state_0(c: COMP):
+    return COMP._make([comp[:, -1] for comp in c])
+
+
 def seasonal(t, offset=0):
     return 1 + np.cos(2 * np.pi * (t - offset))
 
 
-def rota_eq(mcmc, start=None, end=None, state_0=None):
+def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
     m = mcmc
     if start is None: start = m.start
     if end is None: end = m.end
     if state_0 is None: state_0 = m.state_0
-    d = RotaData(365)
+    print (start,'---',end)
+    d = RotaData(steps)
     no_likelihood = ''
     timeline = np.arange(start, end, d.N)
     num_steps = len(timeline)
@@ -60,9 +65,9 @@ def rota_eq(mcmc, start=None, end=None, state_0=None):
     assert len(b) == d.J
     # print (b)
     for t, T in enumerate(timeline[1:], start=1):
-        print(t, '--------')
+        # print(t, '--------')
         n: COMP = COMP._make([np.maximum(0, comp[:, t - 1]) for comp in c])
-        print("n", sum(n).sum())
+        # print("n", sum(n).sum())
         for i in iter_comps:
             c[i][:, t] = c[i][:, t - 1]
         nI = d.psia1 * n.Ia1 + d.psim1 * n.Im2 + d.psis1 + n.Is1 + \
@@ -129,11 +134,11 @@ def rota_eq(mcmc, start=None, end=None, state_0=None):
             c[i][:-1, t] -= d.d[:-1] * c[i][:-1, t - 1]  # OUT
             c[i][1:, t] += d.d[:-1] * c[i][:-1, t - 1]  # IN
             c[i][:, t] -= d.mu * c[i][:, t - 1]  # Death
-        A = [comp[:, t] for comp in c]
+        # A = [comp[:, t] for comp in c]
         # print (sum(A))
-        print("A", sum(A).sum())
-        if sum(A).sum() is np.nan:
-            print("OH NO")
-            raise AssertionError
-        print()
+        # print("A", sum(A).sum())
+        # if sum(A).sum() is np.nan:
+        #     print("OH NO")
+        #     raise AssertionError
+        # print()
     return c

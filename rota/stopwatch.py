@@ -15,7 +15,7 @@ class _elapsed_time(object):
         self.stopper = Stopwatch()
 
     def __exit__(self, ex_type, value, traceback):
-        elapsed_time = "{0}: {1}".format(self.message, get_time_string(self.stopper.end_now()))
+        elapsed_time = "{0}: {1}".format(self.message, self.stopper.end_now())
         self.output_elapsed_time(elapsed_time)
     @staticmethod
     def output_elapsed_time(elapsed_time):

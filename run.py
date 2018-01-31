@@ -9,17 +9,25 @@ from rota import *
 
 if __name__ == '__main__':
     logger.info("start")
-    b1 = Stochastic('b1', 0, 2, initial=0.0001)
-    b2 = Stochastic('b2', 0, 2, initial=0.0001)
+    b1 = Stochastic('b1', 0, 2, initial=0.0003)
+    b2 = Stochastic('b2', 0, 2, initial=0.0003)
     b3 = Stochastic('b3', 0, 2, initial=0.0001)
-    b4 = Stochastic('b4', 0, 2, initial=0.0001)
+    b4 = Stochastic('b4', 0, 2, initial=0.0003)
     b5 = Stochastic('b5', 0, 2, initial=0.0001)
     offset = Stochastic('offset', 0, 2 * np.pi)
     vars = [b1, b2, b3, b4, b5, offset]
-    extra = {'start': 0, 'end': 10, 'scaling_factor': 0.2, 'years_prior': 10}
+    extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 10,
+             }
     x = Rota('x', vars, extra, rota_eq)
-    r = x.run_equations()
-    A = sum(r)
+
+    with PrintElapsedTime():
+        r = x.run_model(all=False)
+    # r = list(r)
+    # rU = COMP._make([np.hstack((a, b, c)) for a, b,c  in zip(r[0], r[1], r[2])])
+    rU = r
+    plot_compartments(rU,'Is1 Ia1')
+    plt.show()
+    A = sum(rU)
     A = pd.DataFrame(A.T, columns=RotaData().a_l)
     plt.plot(A)
     plt.show()

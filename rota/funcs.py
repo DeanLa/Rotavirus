@@ -7,7 +7,7 @@ def mse(x, y):
     res = (x - y) ** 2
     return res.mean()
 
-def log_likelihood(model, data, sigma=1, noise=150):
+def log_likelihood(model, data, sigma=57460, noise=np.inf):
     diff = (model - data) ** 2
     diff[data > noise] = 0
     LL = -diff / (2 * sigma ** 2)
@@ -50,7 +50,7 @@ def is_invertible(a):
 
 # I/O Operations
 def save_mcmc(obj, path='./'):
-    name = obj['name']
+    name = obj.name
     save_path = path + name + '.pkl'
     with open(save_path, 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)

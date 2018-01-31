@@ -6,17 +6,22 @@ class ClinicalData(object):
 
 
 class RotaData(ClinicalData):
-    def __init__(self, steps_in_year=365):
-        self.steps = steps_in_year
-        self.N = 1 / steps_in_year
+    JAPAN_POPULATION = 127_000_000
+    long_infection_duration = 7  # days
+    short_infection_duration = 3.5  # days
+    age_union = np.array([4, 1, 3, 1, 5])
+    ages = np.array((0, 2 / 12, 4 / 12, 6 / 12, 1, 2, 3, 4, 5, 15, 20, 30, 50, 65, 100))
+
+    def __init__(self, steps_in_year=None):
+        self.steps = steps_in_year if steps_in_year else 52
+        self.N = 1 / self.steps
         # Age
-        self.ages = np.array((0, 2 / 12, 4 / 12, 6 / 12, 1, 2, 3, 4, 5, 15, 20, 30, 50, 65, 100))
         self.a_u = self.ages[1:]
         self.a_l = self.ages[:-1]
         self.a = (self.a_u - self.a_l)
         # self.age_dist = self.a / self.a.sum()
         self.J = len(self.a)  # num age groups
-        self.age_union = np.array([4,1,3,1,5])
+
 
         # Death Rate
         self.mu = np.array((3, 3, 3, 3,
@@ -50,8 +55,8 @@ class RotaData(ClinicalData):
         self.rhoa3, self.rhom3, self.rhos3 = 0.8, 0.2, 0.0
 
         # Duration of infection (days)
-        high = self.N * (365 / 7)
-        low = self.N * (365 / 3.5)
+        high = self.N * (365 / self.long_infection_duration)
+        low = self.N * (365 / self.short_infection_duration)
         self.gammaa1 = low
         self.gammam1 = high
         self.gammas1 = high
@@ -68,8 +73,8 @@ class RotaData(ClinicalData):
         self.psia3, self.psim3, self.psis3 = self.psia2, self.psim2, self.psis2
 
         # Relative susceptability following:
-        self.phi1 = 1 # Primarty infection
-        self.phi2 = 0.62 # Second and subsequent infection
+        self.phi1 = 1  # Primarty infection
+        self.phi2 = 0.62  # Second and subsequent infection
         self.phi3 = 0.37
 
         # Duration of immunity (Months)
@@ -79,7 +84,6 @@ class RotaData(ClinicalData):
         self.omega3 = self.omega2
 
         # State_0
-
 
         # self.age_dist = self.a / self.a.sum()
         #
