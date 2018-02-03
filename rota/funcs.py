@@ -50,6 +50,7 @@ def is_invertible(a):
 
 # I/O Operations
 def save_mcmc(obj, path='./'):
+    return
     name = obj.name
     save_path = path + name + '.pkl'
     with open(save_path, 'wb') as f:

@@ -4,13 +4,10 @@ import numpy as np
 
 # from rota import RotaData
 
-COMP = namedtuple("Compartments",
-                  '''M S1 Ia1 Im1 Is1 R1 S2 Ia2 Im2 Is2 R2 S3 Ia3 Im3 Is3 R3 
-                  V1 V2 V3 Iav Imv Isv''')
 
 
-def collect_state_0(fixed: RotaData):
-    dist = fixed.age_dist
+def collect_state_0(fixed):
+    dist = fixed().age_dist
     M = 0.01
     R = 0.4
     S = 0.5

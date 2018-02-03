@@ -71,7 +71,7 @@ class Model(object):
 
 
 class Disease(object):
-    def __init__(self, name, model, **kwargs):
+    def __init__(self, name, model, populate_values, eq_func):
         self.name = name
         self.active = True
         self.xdata = None
@@ -79,8 +79,9 @@ class Disease(object):
         self.yshape = None
         self.xshape = None
         self.get_data()
+        # self.fixed_data = None
         self.model = model
-
+        self.get_stochastics()
         # Constants
         self.accept_hat = 0.23
         self.sigma = 1
@@ -94,11 +95,14 @@ class Disease(object):
         self.initial_values = self.model.values
         self.names = model.names
         self.d = len(self.values)
-        # self.y_hat, self.state_z = self.run_model(self)
+        self.equations = partial(eq_func, self)
+        self.populate(populate_values)
+        self.y_now, self.state_z = self.run_model()
 
         # Chains
-        self.yhat_history = np.zeros(np.append(0, self.yshape))
-        self.state_z_history = []
+        # self.yhat_history = np.zeros(np.append(0, self.yshape))
+        self.yhat_history = self.y_now[None,:,:]
+        self.state_z_history = [self.state_z]
         self.chain = np.zeros((0, self.d))
         self.guesses = np.zeros((0, self.d))
         # Metrics
@@ -109,9 +113,7 @@ class Disease(object):
         self.change = np.ones((0))
         self.ll_history = np.ones((0, 2))
         # Stochastics
-        self.get_stochastics()
-        self.populate(kwargs)
-        self.y_now, self.state_z = self.run_model()
+
         self.compute_jump()
 
     def get_stochastics(self):
@@ -182,6 +184,7 @@ class Disease(object):
             #     continue
             proposed = multinorm(self.values, self.sd)
             guess = proposed.rvs()
+            print(guess)
             # g = self.initial_values
             self.model.update(guess)
             if not self.model.check_proposal():  # Bad guess
@@ -214,10 +217,10 @@ class Disease(object):
             # Update
             self.chain = np.vstack((self.chain, self.values))
             self.guesses = np.vstack((self.guesses, guess))
-            self.mle = np.max(self.mle, ll_now)
-            self.yhat_history = np.concatenate(self.yhat_history, y_star[None, :, :], axis=0)
+            self.mle = np.max((self.mle, ll_now))
+            self.yhat_history = np.concatenate((self.yhat_history, y_star[None, :, :]), axis=0)
+            self.state_z_history.append(self.state_z)
             self.ll_history = np.vstack((self.ll_history, np.array([ll_now, ll_star])))
-            self.state_z
 
     @property
     def no_likelihood(self):
@@ -253,17 +256,15 @@ class Disease(object):
 
 class Rota(Disease):
 
-    def __init__(self, name, stochastics, populate_values, eq_func):
-        super(Rota, self).__init__(name, stochastics)
-        self.stochastics = stochastics
-        self.equations = partial(rota_eq, self)
+    def __init__(self, name, model, populate_values: dict, eq_func):
+        # Rota Specific
+        extra = {}
+        extra['sigma'] = np.array([15662, 31343, 40559, 19608, 6660]).reshape(5, 1)
+        extra['state_0'] = collect_state_0(RotaData)
+        extra.update(populate_values)
+        # Disease
+        super(Rota, self).__init__(name, model,extra,eq_func)
 
-        # self.get_data()
-        fixed = RotaData()
-        self.state_0 = collect_state_0(fixed)
-        self.populate(populate_values)
-        self.sigma = np.array([15662, 31343, 40559, 19608, 6660]).reshape(5, 1)
-        self.y_now, self.state_z = self.run_model()
 
     def run_equations(self):
         self.equations()

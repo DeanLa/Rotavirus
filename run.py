@@ -19,9 +19,8 @@ if __name__ == '__main__':
     model = Model(vars)
     extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 10}
     x = Rota('x', model, extra, rota_eq)
-
     with PrintElapsedTime():
-        r = x.run_model(all=False)
+        x.sample(3)
     # r = list(r)
     # rU = COMP._make([np.hstack((a, b, c)) for a, b,c  in zip(r[0], r[1], r[2])])
     rU = r
