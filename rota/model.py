@@ -10,18 +10,21 @@ logger = logging.getLogger(__name__)
 
 
 class Stochastic(object):
-    def __init__(self, name, a, b, initial=None):
+    def __init__(self, name, a, b, cyclic=False, initial=None):
         self.name = name
         self.a = a
         self.b = b
         self.dist = uniform(a, b - a)
         self.value = initial if initial else self.dist.rvs()
+        self.cyclic = cyclic
 
     def check_proposal(self):
-        return self.a < self.value < self.b
+        return self.a <= self.value <= self.b
 
     def update(self, value):
         self.prev = self.value
+        if self.cyclic:
+            value %= self.b
         self.value = value
 
     def rollback(self):
@@ -37,8 +40,38 @@ class Stochastic(object):
         return self.__str__()
 
 
+class Model(object):
+    def __init__(self, stochastics):
+        self.stochastics = stochastics
+
+    @property
+    def values(self):
+        return [stoch.value for stoch in self.stochastics]
+
+    @property
+    def names(self):
+        return [stoch.name for stoch in self.stochastics]
+
+    def update(self, guess):
+        for i, stoch in enumerate(self.stochastics):
+            stoch.update(guess[i])
+
+    def check_proposal(self):
+        return all([stoch.check_proposal for stoch in self.stochastics])
+
+    def rollback(self):
+        for stoch in self.stochastics:
+            stoch.rollback()
+
+    def __str__(self):
+        return '\n'.join([stoch.__str__() for stoch in self.stochastics])
+
+    def __repr__(self):
+        return self.__str__()
+
+
 class Disease(object):
-    def __init__(self, name, stochastics, **kwargs):
+    def __init__(self, name, model, **kwargs):
         self.name = name
         self.active = True
         self.xdata = None
@@ -46,7 +79,7 @@ class Disease(object):
         self.yshape = None
         self.xshape = None
         self.get_data()
-        self.stochastics = stochastics
+        self.model = model
 
         # Constants
         self.accept_hat = 0.23
@@ -57,15 +90,15 @@ class Disease(object):
         self.end = None
         self.fixed = None
         # Initial Values
-        self.values = [s.value for s in self.stochastics]
-        self.initial_values = [s.value for s in self.stochastics]
-        self.names = [s.name for s in self.stochastics]
+        self.values = self.model.values
+        self.initial_values = self.model.values
+        self.names = model.names
         self.d = len(self.values)
         # self.y_hat, self.state_z = self.run_model(self)
 
         # Chains
         self.yhat_history = np.zeros(np.append(0, self.yshape))
-        self.state_z_history = np.zeros(np.append(0, self.yshape))
+        self.state_z_history = []
         self.chain = np.zeros((0, self.d))
         self.guesses = np.zeros((0, self.d))
         # Metrics
@@ -76,14 +109,14 @@ class Disease(object):
         self.change = np.ones((0))
         self.ll_history = np.ones((0, 2))
         # Stochastics
-        self.get_stochastics(self.stochastics)
+        self.get_stochastics()
         self.populate(kwargs)
-        # self.y_now, self.state_z = self.run_model(), None
+        self.y_now, self.state_z = self.run_model()
         self.compute_jump()
 
-    def get_stochastics(self, stochastics):
-        for var in stochastics:
-            setattr(self, var.name, var.value)
+    def get_stochastics(self):
+        for stoch in self.model.stochastics:
+            setattr(self, stoch.name, stoch.value)
 
     def compute_jump(self, scaling_stop_after=10000, sd_stop_after=10000):
         # Model Specific
@@ -114,23 +147,23 @@ class Disease(object):
                 # Acceptance rate
                 accept_star = np.mean(self.accepted[-recalculate:])
                 self.rates = np.append(self.rates, accept_star)
-                #New scaling factor
+                # New scaling factor
                 if compute_scaling_factor:
                     new_scaling_factor = self.scaling_factor[-1]
                     new_scaling_factor *= np.e ** (accept_star - self.accept_hat)
                     self.scaling_factor = np.append(self.scaling_factor, new_scaling_factor)
                 else:
-                    new_scaling_factor =1
+                    new_scaling_factor = 1
                 # New COV
                 if compute_sd:
                     new_cov_tmp = self.cov.copy()
                     try:
-                        sigma_star = np.cov(self.chain[-recalculate:,:].T)
+                        sigma_star = np.cov(self.chain[-recalculate:, :].T)
                         new_cov = self.cov.copy() * 0.25 + 0.75 - sigma_star
-                        proposed = multinorm(self.values)
+                        proposed = multinorm(self.values, new_cov * new_scaling_factor ** 2)
                         self.cov = new_cov
                     except Exception as e:
-                        print (e)
+                        print(e)
                         print("Singular COV at", len(self), self.name)
                         print(self.cov)
                         self.cov = new_cov_tmp
@@ -139,6 +172,56 @@ class Disease(object):
             # Current State
             ll_now = log_likelihood(self.y_now, self.ydata, sigma=self.sigma)
 
+            # try:
+            #     proposed = multinorm(self.values, self.sd)
+            # except Exception as e:
+            #     print(e)
+            #     print(self.name, "TURNED OFF", len(self))
+            #     self.turn_off()
+            #     save_mcmc(self)
+            #     continue
+            proposed = multinorm(self.values, self.sd)
+            guess = proposed.rvs()
+            # g = self.initial_values
+            self.model.update(guess)
+            if not self.model.check_proposal():  # Bad guess
+                logger.info("bad prior")
+                ll_star = -np.inf
+                y_star, state_z = self.no_likelihood
+                self.model.rollback()
+            else:  # Good guess continue MCMC
+                try:
+                    y_star, state_z = self.run_model()
+                    ll_star = log_likelihood(y_star, self.ydata, self.sigma)
+                    logger.info(str(ll_star))
+                    if ll_star < -(1e20):
+                        logger.warning('bad set for model {} with guess {}'.format(self.name, iteration))
+                except Exception as e:
+                    logger.info(e)
+                    logger.error('exception at model {} PROBABLY S-I-R fail'.format(self.name))
+                    ll_star = -np.inf
+
+            log_r = ll_star - ll_now
+            draw = np.random.rand()
+
+            if log_r > np.log(draw):
+                self.values = self.model.values
+                self.accepted = np.append(self.accepted, 1)
+                self.y_now = y_star
+            else:
+                self.accepted = np.append(self.accepted, 0)
+
+            # Update
+            self.chain = np.vstack((self.chain, self.values))
+            self.guesses = np.vstack((self.guesses, guess))
+            self.mle = np.max(self.mle, ll_now)
+            self.yhat_history = np.concatenate(self.yhat_history, y_star[None, :, :], axis=0)
+            self.ll_history = np.vstack((self.ll_history, np.array([ll_now, ll_star])))
+            self.state_z
+
+    @property
+    def no_likelihood(self):
+        raise NotImplementedError
 
     def run_model(self):
         '''returns the results of the model and the state at last point of time'''
@@ -147,6 +230,9 @@ class Disease(object):
     def get_data(self):
         raise NotImplementedError
 
+    def turn_off(self):
+        self.active = False
+
     def autosave(self, every=50, path='./'):
         if len(self) % every == 0:
             save_mcmc(self, path)
@@ -154,7 +240,8 @@ class Disease(object):
     @classmethod
     def load(cls, path):
         mcmc = load_mcmc(path)
-        assert isinstance(mcmc,cls), "Loaded file is not of type".format(cls)
+        assert isinstance(mcmc, cls), "Loaded file is not of type".format(cls)
+
     def __len__(self):
         return len(self.chain)
 
@@ -175,33 +262,29 @@ class Rota(Disease):
         fixed = RotaData()
         self.state_0 = collect_state_0(fixed)
         self.populate(populate_values)
-        self.sigma = np.array([15662, 31343, 40559, 19608, 6660]).reshape(5,1)
+        self.sigma = np.array([15662, 31343, 40559, 19608, 6660]).reshape(5, 1)
+        self.y_now, self.state_z = self.run_model()
 
     def run_equations(self):
         self.equations()
 
-    def run_model(self, resolution = 4, warmup=2, all=False):
-        prior = self.start - self.years_prior
-        warmup = prior + warmup
-        # c_warmup = self.equations(steps=52*3, start=prior, end=warmup)
-        # c_steady = self.equations(steps=52*3, start=warmup, end=self.start, state_0=make_state_0(c_warmup))
-        # c_real = self.equations(steps=52*3,state_0 = make_state_0(c_steady))
+    @property
+    def no_likelihood(self):
+        c = -np.inf * np.ones((RotaData.J, 52 * 9))
+        z = COMP._make([-np.inf * np.ones((RotaData.J)).reshape(-1, 1) for _ in COMP._fields])
+        return c, z
 
-        # if all:
-        #     c1 = COMP._make([c[:, ::3] for c in c_warmup])
-        #     c2 = COMP._make([c[:, ::3] for c in c_steady])
-        #     c3 = COMP._make([c[:, ::3] for c in c_real])
-        #     return c1, c2, c3
-            # return COMP._make([np.hstack((a,b)) for a,b in zip(c_warmup, c_steady)])
+    def run_model(self, resolution=4):
+        prior = self.start - self.years_prior
         c_real = self.equations(steps=resolution * 52, start=prior)
-        state_z = COMP._make([comp[:,-1] for comp in c_real])
-        c = COMP._make([comp[:,-resolution*52*self.end::resolution] for comp in c_real])
+        state_z = COMP._make([comp[:, -1] for comp in c_real])
+        c = COMP._make([comp[:, -resolution * 52 * self.end::resolution] for comp in c_real])
         c = make_model_cases(c)
         return c, state_z
 
     def get_data(self):
-        self.ydata = np.genfromtxt('data/cases.csv',delimiter=',',skip_header=1).T
-        self.xdata = np.arange(2003,2012,1/52)
+        self.ydata = np.genfromtxt('data/cases.csv', delimiter=',', skip_header=1).T
+        self.xdata = np.arange(2003, 2012, 1 / 52)
         self.yshape = self.ydata.shape
         self.xshape = self.xdata.shape
         # assert sim1 of x is like y
@@ -211,6 +294,7 @@ class Chains(object):
     def __init__(self, *args):
         self.chains = list(args)
 
+
 def make_model_cases(c: COMP):
     union = RotaData.age_union
     long = (c.Im1 + c.Is1) * 7 / RotaData.short_infection_duration
@@ -218,6 +302,7 @@ def make_model_cases(c: COMP):
     I = RotaData.JAPAN_POPULATION * (short + long)
     split = np.vsplit(I, union.cumsum())
     return np.array([xi.sum(axis=0) for xi in split[:-1]])
+
 
 if __name__ == '__main__':
     logger.info("start")

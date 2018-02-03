@@ -11,17 +11,15 @@ class RotaData(ClinicalData):
     short_infection_duration = 3.5  # days
     age_union = np.array([4, 1, 3, 1, 5])
     ages = np.array((0, 2 / 12, 4 / 12, 6 / 12, 1, 2, 3, 4, 5, 15, 20, 30, 50, 65, 100))
+    # Age
+    a_u = ages[1:]
+    a_l = ages[:-1]
+    a = (a_u - a_l)
+    J = len(a)  # num age groups
 
     def __init__(self, steps_in_year=None):
         self.steps = steps_in_year if steps_in_year else 52
         self.N = 1 / self.steps
-        # Age
-        self.a_u = self.ages[1:]
-        self.a_l = self.ages[:-1]
-        self.a = (self.a_u - self.a_l)
-        # self.age_dist = self.a / self.a.sum()
-        self.J = len(self.a)  # num age groups
-
 
         # Death Rate
         self.mu = np.array((3, 3, 3, 3,

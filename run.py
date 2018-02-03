@@ -14,11 +14,11 @@ if __name__ == '__main__':
     b3 = Stochastic('b3', 0, 2, initial=0.0001)
     b4 = Stochastic('b4', 0, 2, initial=0.0003)
     b5 = Stochastic('b5', 0, 2, initial=0.0001)
-    offset = Stochastic('offset', 0, 2 * np.pi)
+    offset = Stochastic('offset', 0, 2 * np.pi, cyclic=True)
     vars = [b1, b2, b3, b4, b5, offset]
-    extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 10,
-             }
-    x = Rota('x', vars, extra, rota_eq)
+    model = Model(vars)
+    extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 10}
+    x = Rota('x', model, extra, rota_eq)
 
     with PrintElapsedTime():
         r = x.run_model(all=False)
