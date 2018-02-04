@@ -1,26 +1,26 @@
-from rota import *
+# from rota import *
 from collections import namedtuple
 import numpy as np
 
 # from rota import RotaData
-
+from rota import COMP, logger, RotaData, concat_nums
 
 
 def collect_state_0(fixed):
     dist = fixed().age_dist
-    M = 0.01
-    R = 0.4
-    S = 0.5
+    M = 0.0025
+    R = 0.83
+    S = 0.16
     I = 1 - M - S - R
     c = COMP._make(dist * 0 for _ in COMP._fields)
     assert type(c) == COMP
     c.M[:] = dist * M
-    c.R1[:] = dist * R * 3 / 45
-    c.R2[:] = dist * R * 18 / 45
-    c.R3[:] = dist * R * 24 / 45
-    c.S1[:] = dist * S / 3
-    c.S2[:] = dist * S / 3
-    c.S3[:] = dist * S / 3
+    c.R1[:] = dist * R * 0.025
+    c.R2[:] = dist * R * 0.025
+    c.R3[:] = dist * R * 0.95
+    c.S1[:] = dist * S * 0.01
+    c.S2[:] = dist * S * 0.01
+    c.S3[:] = dist * S * 0.99
     c.Ia1[:] = dist * I / 9
     c.Im1[:] = dist * I / 9
     c.Is1[:] = dist * I / 9
@@ -35,7 +35,7 @@ def collect_state_0(fixed):
     return c
 
 
-def make_state_0(c: COMP):
+def state_z_to_state_0(c: COMP):
     return COMP._make([comp[:, -1] for comp in c])
 
 
@@ -44,13 +44,12 @@ def seasonal(t, offset=0):
 
 
 def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
+    logger.info("Running Model")
     m = mcmc
     if start is None: start = m.start
     if end is None: end = m.end
     if state_0 is None: state_0 = m.state_0
-    print (start,'---',end)
     d = RotaData(steps)
-    no_likelihood = ''
     timeline = np.arange(start, end, d.N)
     num_steps = len(timeline)
     c: COMP = COMP._make([np.zeros((d.J, num_steps)) for _ in COMP._fields])
@@ -71,7 +70,7 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
              d.psia2 * n.Ia2 + d.psim2 * n.Im2 + d.psis2 + n.Is2 + \
              d.psia3 * n.Ia3 + d.psim3 * n.Im3 + d.psis3 + n.Is3
         IC = nI.dot(d.C)
-        lamda = b * IC * seasonal(T, m.offset)
+        lamda = b * IC * seasonal(T, m.offset) + 1e-5
         # Start Equations
         # Maternal Immunity
         c.M[0, t] += d.delta
@@ -131,6 +130,11 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
             c[i][:-1, t] -= d.d[:-1] * c[i][:-1, t - 1]  # OUT
             c[i][1:, t] += d.d[:-1] * c[i][:-1, t - 1]  # IN
             c[i][:, t] -= d.mu * c[i][:, t - 1]  # Death
+
+        pop = sum([comp[:, t] for comp in c]).sum()
+        if (pop < -0.5):
+            logger.error('explode equations {}'.format(pop))
+            raise ArithmeticError
         # A = [comp[:, t] for comp in c]
         # print (sum(A))
         # print("A", sum(A).sum())

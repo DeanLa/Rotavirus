@@ -10,7 +10,12 @@ class RotaData(ClinicalData):
     long_infection_duration = 7  # days
     short_infection_duration = 3.5  # days
     age_union = np.array([4, 1, 3, 1, 5])
-    ages = np.array((0, 2 / 12, 4 / 12, 6 / 12, 1, 2, 3, 4, 5, 15, 20, 30, 50, 65, 100))
+    ages = np.array((0, 2 / 12, 4 / 12, 6 / 12,
+                     1,
+                     2, 3, 4,
+                     5,
+                     15, 20, 30, 50, 65,
+                     100))
     # Age
     a_u = ages[1:]
     a_l = ages[:-1]

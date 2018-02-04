@@ -4,7 +4,7 @@ from datetime import timedelta
 import re
 
 # from numeric_utils import trim_to_first_significant_digits
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 class _elapsed_time(object):
