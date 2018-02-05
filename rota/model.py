@@ -196,7 +196,8 @@ class Disease(object):
 
             # Current State
             ll_now = log_likelihood(self.y_now, self.ydata, sigma=self.sigma)
-
+            tmp = self.y_now
+            ptmp = tmp / tmp.sum(axis=0)
             # try:
             #     proposed = multinorm(self.values, self.sd)
             # except Exception as e:
@@ -334,7 +335,7 @@ class Chains(object):
 def make_model_cases(c: COMP):
     union = RotaData.age_union
     long = (c.Im1 + c.Is1) * 7 / RotaData.long_infection_duration
-    short = (c.Ia1 + c.Ia2 + c.Im2 + c.Is2 + c.Ia3 + c.Im3 + c.Is3) * 7 / RotaData.short_infection_duration
+    short = (c.Im2 + c.Is2 + c.Im3 + c.Is3) * 7 / RotaData.short_infection_duration
     I = RotaData.JAPAN_POPULATION * (short + long)
     split = np.vsplit(I, union.cumsum())
     return np.array([xi.sum(axis=0) for xi in split[:-1]])

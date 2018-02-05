@@ -52,3 +52,12 @@ def plot_compartments(obj, compartments=None, ax=None):
         ax.annotate(name, xy=(x, y), textcoords='data')
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     return fig, ax
+
+
+def plot_against_data(model, data):
+    fig, axs = plt.subplots(5, 1, figsize=(20, 9))
+    xaxis = np.arange(data.shape[1])
+    for i, ax in enumerate(axs):
+        ax.plot(xaxis, model[i, :])
+        ax.scatter(xaxis, data[i, :])
+    return fig, ax

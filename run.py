@@ -17,12 +17,16 @@ if __name__ == '__main__':
     offset = Stochastic('offset', 0, 2 * np.pi, cyclic=True)
     vars = [b1, b2, b3, b4, b5, offset]
     model = Model(vars)
+    model.update([0.0000003, 0.0000005, 0.00000016, 4e-7, 3.36e-8, 1])
     extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 10}
     x = Rota('x', model, extra, rota_eq)
-    for _ in tqdm(range(100)):
-        x.random_run()
+    print (log_likelihood(x.y_now,x.ydata,x.sigma))
+    plot_against_data(x.y_now, x.ydata)
+    plt.show()
+    # for _ in tqdm(range(100)):
+    #     x.random_run()
     with PrintElapsedTime():
-        x.sample(300)
+        x.sample(1)
     # r = list(r)
     # rU = COMP._make([np.hstack((a, b, c)) for a, b,c  in zip(r[0], r[1], r[2])])
     r = x.equations(steps=4 * 52, start=-10)
