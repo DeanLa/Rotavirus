@@ -88,6 +88,7 @@ class Disease(object):
         self.yshape = None
         self.xshape = None
         self.get_data()
+        self.resolution = 7
         # self.fixed_data = None
         self.model = model
         self.set_stochastics()
@@ -105,22 +106,24 @@ class Disease(object):
         self.names = model.names
         self.d = len(self.values)
         self.equations = partial(eq_func, self)
-        self.populate(populate_values)
-        self.y_now, self.state_z = self.run_model(resolution=6)
 
+        self.sd_stop_after = 5000
+        self.scaling_stop_after = 5000
+        self.populate(populate_values)
+        self.y_now, self.state_z = self.run_model()
         # Chains
         # self.yhat_history = np.zeros(np.append(0, self.yshape))
         self.yhat_history = self.y_now[None, :, :]
         self.state_z_history = [self.state_z]
-        self.chain = np.zeros((0, self.d))
-        self.guesses = np.zeros((0, self.d))
+        self.chain = np.array(self.model.values)
+        self.guesses = np.array(self.model.values)
         # Metrics
-        self.accepted = np.ones(0)
+        self.accepted = np.ones(1)
         self.rates = np.ones((0))
-        self.mle = -np.inf
+        self.mle = self.ll_now()
         self.gelman_rubin = np.zeros((0, self.d))
         self.change = np.ones((0))
-        self.ll_history = np.ones((0, 2))
+        self.ll_history = np.array([-np.inf, self.ll_now()])
         # Stochastics
         self.compute_jump()
 
@@ -146,7 +149,7 @@ class Disease(object):
             setattr(self, k, v)
 
     def random_run(self):
-        logger.info('='*80)
+        logger.info('=' * 80)
         self.model.random()
         self.set_stochastics()
         try:
@@ -160,14 +163,15 @@ class Disease(object):
             logger.error('exception at model {} PROBABLY S-I-R fail'.format(self.name))
             # y_star, state_z = self.no_likelihood
             # ll_star = -np.inf
-    def sample(self, recalculate=500):
+
+    def sample_single(self, recalculate=500,save_path='./'):
         compute_scaling_factor = self.scaling_stop_after > len(self)
-        compute_sd = self.sd_stop_after < len(self)
+        compute_sd = self.sd_stop_after > len(self)
         for iteration in trange(recalculate, desc=self.name, leave=False, position=0):
             if not self.active: continue
             logger.info(' ' * 20 + 'CHAIN {} ITERATION {}'.format(self.name, len(self.accepted)))
             # Save Chain
-            self.autosave(50)
+            self.autosave(50,path=save_path)
             if iteration == recalculate - 1:
                 # Acceptance rate
                 accept_star = np.mean(self.accepted[-recalculate:])
@@ -184,7 +188,7 @@ class Disease(object):
                     new_cov_tmp = self.cov.copy()
                     try:
                         sigma_star = np.cov(self.chain[-recalculate:, :].T)
-                        new_cov = self.cov.copy() * 0.25 + 0.75 - sigma_star
+                        new_cov = self.cov.copy() * 0.25 + 0.75 * sigma_star
                         proposed = multinorm(self.values, new_cov * new_scaling_factor ** 2)
                         self.cov = new_cov
                     except Exception as e:
@@ -195,9 +199,9 @@ class Disease(object):
                 self.sd = new_scaling_factor ** 2 * self.cov
 
             # Current State
-            ll_now = log_likelihood(self.y_now, self.ydata, sigma=self.sigma)
-            tmp = self.y_now
-            ptmp = tmp / tmp.sum(axis=0)
+            ll_now = self.ll_now()
+            # tmp = self.y_now
+            # ptmp = tmp / tmp.sum(axis=0)
             # try:
             #     proposed = multinorm(self.values, self.sd)
             # except Exception as e:
@@ -208,7 +212,7 @@ class Disease(object):
             #     continue
             proposed = multinorm(self.values, self.sd)
             guess = proposed.rvs()
-            print(guess)
+            # print(guess)
             self.model.update(guess)
             if not self.model.check_proposal():  # Bad guess
                 logger.info("bad prior")
@@ -219,7 +223,7 @@ class Disease(object):
                 try:
                     self.set_stochastics()
                     logger.info('guess: {}'.format(guess))
-                    y_star, state_z = self.run_model(7)
+                    y_star, state_z = self.run_model()
                     ll_star = log_likelihood(y_star, self.ydata, self.sigma)
                     logger.info(str(ll_star))
                     if ll_star < -(1e20):
@@ -248,13 +252,25 @@ class Disease(object):
             self.state_z_history.append(self.state_z)
             self.ll_history = np.vstack((self.ll_history, np.array([ll_now, ll_star])))
 
+    def sample(self, iterations, recalculate, save_path='./', do_gr=True):
+        iter_over = np.ones(int(iterations//recalculate)) * int(recalculate)
+        iter_mod = iterations % recalculate
+        if iter_mod: iter_over = np.append(iter_over, iter_mod)
+        iter_over = iter_over.astype(int)
+
+        for mini in tqdm(iter_over, desc=' '*50, position=2):
+            print(mini)
+            self.sample_single(mini,save_path)
+        self.save(save_path)
+
+    def ll_now(self):
+        return log_likelihood(self.y_now,self.ydata,self.sigma)
     @property
     def no_likelihood(self):
         raise NotImplementedError
 
-    def run_model(self, resolution):
+    def run_model(self):
         '''returns the results of the model and the state at last point of time
-        :param resolution:
         '''
         raise NotImplementedError
 
@@ -264,6 +280,9 @@ class Disease(object):
     def turn_off(self):
         self.active = False
 
+    def save(self, path='./'):
+        save_mcmc(self, path)
+
     def autosave(self, every=50, path='./'):
         if len(self) % every == 0:
             save_mcmc(self, path)
@@ -272,6 +291,7 @@ class Disease(object):
     def load(cls, path):
         mcmc = load_mcmc(path)
         assert isinstance(mcmc, cls), "Loaded file is not of type".format(cls)
+        return mcmc
 
     def __len__(self):
         return len(self.chain)
@@ -302,7 +322,12 @@ class Rota(Disease):
         z = COMP._make([-np.inf * np.ones((RotaData.J)).reshape(-1, 1) for _ in COMP._fields])
         return c, z
 
-    def run_model(self, resolution=7):
+    def best_run(self):
+        w = np.where(self.ll_history[:,1,]==self.mle)[0][0]
+        print ("{} at iteration {}".format(self.mle, w))
+        return self.yhat_history[w], self.state_z_history[w]
+    def run_model(self):
+        resolution = self.resolution
         prior = self.start - self.years_prior
         c_real = self.equations(steps=resolution * 52, start=prior)
         state_z = COMP._make([comp[:, -1] for comp in c_real])
@@ -320,9 +345,9 @@ class Rota(Disease):
     def compute_jump(self, scaling_stop_after=10000, sd_stop_after=10000):
         # Model Specific
         self.scaling_factor = np.array([2.4 / np.sqrt(self.d)])
-        self.cov = np.diag(np.ones(self.d)) * 1e-7
-        self.sd_stop_after = sd_stop_after
-        self.scaling_stop_after = scaling_stop_after
+        cov = [1, 1, 0.5, 0.2, 0.01, 1]
+        self.cov = np.diag(cov)
+
         # After updating
         self.sd = self.scaling_factor ** 2 * self.cov
 
@@ -338,7 +363,8 @@ def make_model_cases(c: COMP):
     short = (c.Im2 + c.Is2 + c.Im3 + c.Is3) * 7 / RotaData.short_infection_duration
     I = RotaData.JAPAN_POPULATION * (short + long)
     split = np.vsplit(I, union.cumsum())
-    return np.array([xi.sum(axis=0) for xi in split[:-1]])
+    ret = np.array([xi.sum(axis=0) for xi in split[:-1]])
+    return ret
 
 
 if __name__ == '__main__':

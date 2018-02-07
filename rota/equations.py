@@ -45,6 +45,7 @@ def seasonal(t, offset=0):
 
 def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
     logger.info("Running Model")
+    low_force = 10e-9
     m = mcmc
     if start is None: start = m.start
     if end is None: end = m.end
@@ -57,7 +58,7 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
     for i in iter_comps:
         c[i][:, 0] = state_0[i]
     sa = d.age_union
-    b = concat_nums(m.b1, sa[0], m.b2, sa[1], m.b3, sa[2], m.b4, sa[3], m.b5, sa[4])
+    b = concat_nums(m.b1, sa[0], m.b2, sa[1], m.b3, sa[2], m.b4, sa[3], m.b5, sa[4]) * 1e-7
     assert len(b) == d.J
     # print (b)
     for t, T in enumerate(timeline[1:], start=1):
@@ -70,7 +71,7 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
              d.psia2 * n.Ia2 + d.psim2 * n.Im2 + d.psis2 + n.Is2 + \
              d.psia3 * n.Ia3 + d.psim3 * n.Im3 + d.psis3 + n.Is3
         IC = nI.dot(d.C)
-        lamda = b * IC * seasonal(T, m.offset) + 1e-5
+        lamda = b * IC * seasonal(T, m.offset / 10) + low_force
         # Start Equations
         # Maternal Immunity
         c.M[0, t] += d.delta

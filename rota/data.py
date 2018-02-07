@@ -6,7 +6,7 @@ class ClinicalData(object):
 
 
 class RotaData(ClinicalData):
-    JAPAN_POPULATION = 127_000_000
+    JAPAN_POPULATION = 127000000
     long_infection_duration = 7  # days
     short_infection_duration = 3.5  # days
     age_union = np.array([4, 1, 3, 1, 5])

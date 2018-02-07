@@ -55,9 +55,20 @@ def plot_compartments(obj, compartments=None, ax=None):
 
 
 def plot_against_data(model, data):
-    fig, axs = plt.subplots(5, 1, figsize=(20, 9))
+    titles = ['Age 0-1','Age 1-2','Age 2-5','Age 5-5','Age >15','Total']
+    fig, axs = plt.subplots(2, 3, figsize=(20, 9))
+    axs = np.hstack(axs)
     xaxis = np.arange(data.shape[1])
-    for i, ax in enumerate(axs):
-        ax.plot(xaxis, model[i, :])
-        ax.scatter(xaxis, data[i, :])
+    for i, ax in enumerate(axs[:-1]):
+        ax.plot(xaxis, data[i, :], label='Data',color='red')
+        ax.plot(xaxis, model[i, :], label='Model',color='k')
+        ax.set_title(titles[i])
+        ax.legend(bbox_to_anchor=(0.5, -0.05), ncol=2,mode='expand')
+
+    ax=axs[-1]
+    ax.plot(xaxis, data.sum(axis=0), label='Data',color='red')
+    ax.plot(xaxis, model.sum(axis=0),label='Model',color='k')
+    ax.set_title('Total')
+    ax.legend(bbox_to_anchor=(0.5,-0.05), ncol=2, mode='expand')
+
     return fig, ax

@@ -1,5 +1,6 @@
 import numpy as np
-import pickle
+# import pickle
+import dill as pickle
 from rota import *
 
 # Math
@@ -52,7 +53,7 @@ def is_invertible(a):
 
 # I/O Operations
 def save_mcmc(obj, path='./'):
-    return
+    # return
     name = obj.name
     save_path = path + name + '.pkl'
     with open(save_path, 'wb') as f:
@@ -64,10 +65,10 @@ def save_mcmc(obj, path='./'):
     except FileNotFoundError as e:
         print(e)
         print("NO BACKUP SAVE")
-    return obj['name']
+    return obj.name
 
 
-def load_mcmc(path='./mcmc.pkl'):
+def load_mcmc(path='./mcmc180208.pkl'):
     with open(path, 'rb') as f:
         return pickle.load(f)
 
