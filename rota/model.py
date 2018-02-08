@@ -89,7 +89,6 @@ class Disease(object):
         self.xshape = None
         self.get_data()
         self.resolution = 7
-        # self.fixed_data = None
         self.model = model
         self.set_stochastics()
         # Constants
@@ -100,6 +99,7 @@ class Disease(object):
         self.years_prior = None
         self.end = None
         self.fixed = None
+        self.tally = 0
         # Initial Values
         self.values = self.model.values
         self.initial_values = self.model.values
@@ -154,24 +154,32 @@ class Disease(object):
         self.set_stochastics()
         try:
             logger.info('guess: {}'.format(self.model.values))
-            y_star, _ = self.run_model(7)
-            ll_star = log_likelihood(y_star, self.ydata, self.sigma)
+            y_star, _ = self.run_model()
+            ll_star = self.ll_now()
+            if ll_star < -130:
+                print (self.model.values)
+                print(ll_star)
+                print ()
             logger.info('LL:    {}'.format(ll_star))
             # if ll_star < -(1e20):
             #     logger.warning('bad set for model {} with guess {}'.format(self.name, iteration))
+            self.chain = np.vstack((self.chain, self.values))
+            self.mle = np.max((self.mle, ll_star))
+            self.yhat_history = np.concatenate((self.yhat_history, y_star[None, :, :]), axis=0)
+            self.ll_history = np.vstack((self.ll_history, np.array([np.nan, ll_star])))
         except Exception as e:
             logger.error('exception at model {} PROBABLY S-I-R fail'.format(self.name))
-            # y_star, state_z = self.no_likelihood
-            # ll_star = -np.inf
 
-    def sample_single(self, recalculate=500,save_path='./'):
+
+
+    def sample_single(self, recalculate=500, save_path='./'):
         compute_scaling_factor = self.scaling_stop_after > len(self)
         compute_sd = self.sd_stop_after > len(self)
         for iteration in trange(recalculate, desc=self.name, leave=False, position=0):
             if not self.active: continue
             logger.info(' ' * 20 + 'CHAIN {} ITERATION {}'.format(self.name, len(self.accepted)))
             # Save Chain
-            self.autosave(50,path=save_path)
+            self.autosave(50, path=save_path)
             if iteration == recalculate - 1:
                 # Acceptance rate
                 accept_star = np.mean(self.accepted[-recalculate:])
@@ -253,18 +261,19 @@ class Disease(object):
             self.ll_history = np.vstack((self.ll_history, np.array([ll_now, ll_star])))
 
     def sample(self, iterations, recalculate, save_path='./', do_gr=True):
-        iter_over = np.ones(int(iterations//recalculate)) * int(recalculate)
+        iter_over = np.ones(int(iterations // recalculate)) * int(recalculate)
         iter_mod = iterations % recalculate
         if iter_mod: iter_over = np.append(iter_over, iter_mod)
         iter_over = iter_over.astype(int)
 
-        for mini in tqdm(iter_over, desc=' '*50, position=2):
+        for mini in tqdm(iter_over, desc=' ' * 50, position=2):
             print(mini)
-            self.sample_single(mini,save_path)
+            self.sample_single(mini, save_path)
         self.save(save_path)
 
     def ll_now(self):
-        return log_likelihood(self.y_now,self.ydata,self.sigma)
+        return log_likelihood(self.y_now, self.ydata, self.sigma)
+
     @property
     def no_likelihood(self):
         raise NotImplementedError
@@ -323,9 +332,10 @@ class Rota(Disease):
         return c, z
 
     def best_run(self):
-        w = np.where(self.ll_history[:,1,]==self.mle)[0][0]
-        print ("{} at iteration {}".format(self.mle, w))
+        w = np.where(self.ll_history[:, 1, ] == self.mle)[0][0]
+        print("{} at iteration {}".format(self.mle, w))
         return self.yhat_history[w], self.state_z_history[w]
+
     def run_model(self):
         resolution = self.resolution
         prior = self.start - self.years_prior

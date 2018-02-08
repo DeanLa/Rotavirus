@@ -10,13 +10,13 @@ from rota import *
 
 if __name__ == '__main__':
     logger.info("start")
-    new_mcmc = False
+    new_mcmc = True
     if new_mcmc:
-        b1 = Stochastic('b1', 0, 10, initial=3)
-        b2 = Stochastic('b2', 0, 10, initial=5)
-        b3 = Stochastic('b3', 0, 10, initial=1.6)
-        b4 = Stochastic('b4', 0, 10, initial=1)
-        b5 = Stochastic('b5', 0, 10, initial=0.336)
+        b1 = Stochastic('b1', 0, 10, initial=3 * 1.5)
+        b2 = Stochastic('b2', 0, 10, initial=5 * 1.5)
+        b3 = Stochastic('b3', 0, 10, initial=1.6 * 1.5)
+        b4 = Stochastic('b4', 0, 10, initial=1 * 1.5)
+        b5 = Stochastic('b5', 0, 10, initial=0.336 * 1.5)
         offset = Stochastic('offset', 0, 10, initial=3, cyclic=True)
         vars = [b1, b2, b3, b4, b5, offset]
         model = Model(vars)

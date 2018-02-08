@@ -19,7 +19,7 @@ sh = logging.StreamHandler()
 sh.setFormatter(formatter)
 sh.setLevel(logging.CRITICAL)
 
-fh = logging.FileHandler('./log/'+file_name, mode='w')
+fh = logging.FileHandler('./log/'+file_name, mode='a')
 fh.setFormatter(formatter)
 fh.setLevel(logging.DEBUG)
 

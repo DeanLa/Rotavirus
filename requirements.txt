@@ -1,0 +1,15 @@
+certifi==2018.1.18
+cycler==0.10.0
+dill==0.2.7.1
+matplotlib==2.1.1
+numpy==1.13.3
+pandas==0.22.0
+pyparsing==2.2.0
+pyreadline==2.1
+python-dateutil==2.6.1
+pytz==2017.3
+scipy==1.0.0
+six==1.11.0
+tornado==4.5.2
+tqdm==4.19.4
+wincertstore==0.2
