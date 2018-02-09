@@ -176,14 +176,14 @@ class Disease(object):
 
 
 
-    def sample_single(self, recalculate=500, save_path='./'):
+    def sample_single(self, recalculate=500):
         compute_scaling_factor = self.scaling_stop_after > len(self)
         compute_sd = self.sd_stop_after > len(self)
         for iteration in trange(recalculate, desc=self.name, leave=False, position=0):
             if not self.active: continue
             logger.info(' ' * 20 + 'CHAIN {} ITERATION {}'.format(self.name, len(self.accepted)))
             # Save Chain
-            self.autosave(50, path=save_path)
+            self.autosave(50)
             if iteration == recalculate - 1:
                 # Acceptance rate
                 accept_star = np.mean(self.accepted[-recalculate:])
@@ -264,7 +264,7 @@ class Disease(object):
             self.state_z_history.append(self.state_z)
             self.ll_history = np.vstack((self.ll_history, np.array([ll_now, ll_star])))
 
-    def sample(self, iterations, recalculate, save_path='./', do_gr=True):
+    def sample(self, iterations, recalculate, do_gr=True):
         iter_over = np.ones(int(iterations // recalculate)) * int(recalculate)
         iter_mod = iterations % recalculate
         if iter_mod: iter_over = np.append(iter_over, iter_mod)
@@ -272,8 +272,8 @@ class Disease(object):
 
         for mini in tqdm(iter_over, desc=' ' * 50, position=2):
             # print(mini)
-            self.sample_single(mini, save_path)
-        self.save(save_path)
+            self.sample_single(mini)
+        self.save()
 
     def ll_now(self):
         return log_likelihood(self.y_now, self.ydata, self.sigma)

@@ -14,9 +14,11 @@ from rota import *
 
 
 for i in range(16):
-    m=Rota.load('./chains/a0209/mcmc_mp_mcmc_{}.pkl'.format(i))
+    m=Rota.load('./mcmc_mp_mcmc_{}.pkl'.format(i))
+    print ('='*80)
     print(m.name)
-    print(m.mle)
+    print ("Length {}".format(len(m)))
+    print("MLE: {}".format(m.mle))
     if m.mle > -150: print('*'*50)
 
 x=1
