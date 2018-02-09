@@ -54,7 +54,7 @@ def plot_compartments(obj, compartments=None, ax=None):
     return fig, ax
 
 
-def plot_against_data(model, data):
+def plot_against_data(model, data, **kwargs):
     titles = ['Age 0-1', 'Age 1-2', 'Age 2-5', 'Age 5-5', 'Age >15', 'Total']
     fig, axs = plt.subplots(2, 3, figsize=(20, 9))
     axs = np.hstack(axs)
@@ -106,10 +106,10 @@ def plot_stoch_vars(mcmc, which=None):
             ax.fill_betweenx([0, m + 5], quants[0], quants[-1], color='lightgreen')
             ax.fill_betweenx([0, m + 5], quants[1], quants[-2], color='darkgreen')
             ax.set_title("{var} = {value:.4f} [{lci:.4f}, {hci:.4f}] ({tmp:.4f})".format(var=stoch.name,
-                                                                                                tmp=tr_val.mean(),
-                                                                                                value=quants[2],
-                                                                                                lci=quants[0],
-                                                                                                hci=quants[-1]))
+                                                                                         tmp=tr_val.mean(),
+                                                                                         value=quants[2],
+                                                                                         lci=quants[0],
+                                                                                         hci=quants[-1]))
             ax.set_xticks(ax.get_xticks()[::2])  # X 0
             ax.set_yticks(ax.get_yticks()[::2])  # Y 0
             ax.set_ylim([0, m + 5])
@@ -121,10 +121,40 @@ def plot_stoch_vars(mcmc, which=None):
             ax.set_xticks(ax.get_xticks()[::2])  # X 1
             ax.set_yticks(ax.get_yticks()[::2])  # Y 1
             ax.set_xlim([xaxis[0], xaxis[-1]])
+            ax.set_xlim([0,10])
 
         except Exception as e:
-            print (e)
+            print(e)
             print(stoch.name, " excluded")
     # fig.set_tight_layout
     fig.suptitle("Posterior Distribution <|> Convergence")
     return fig, axs
+
+
+def plot_likelihood_cloud(mcmc: Disease, max_lines=100):
+    fig, axs = plt.subplots(1, figsize=(16, 9))
+    data = mcmc.ydata.sum(axis=0)
+    ax = axs
+    w = np.where(mcmc.ll_history[:, 1, ] == mcmc.mle)[0][0]
+    best = mcmc.yhat_history[w]
+    xaxis = np.arange(len(data)) / 52 + 2003
+    ax.scatter(xaxis, data, label='Data', color='red', zorder=5)
+    ax.plot(xaxis, best.sum(axis=0), label='MLE Model', color='k', zorder=10)
+    ax.set_title('Likelihood Cloud')
+    ax.legend(bbox_to_anchor=(0.5, -0.05), ncol=2, mode='expand')
+
+    length = len(mcmc) - mcmc.tally
+    every = length // max_lines
+    for curr_model in mcmc.yhat_history[mcmc.tally::every]:
+        ax.plot(xaxis, curr_model.sum(axis=0), label='Model Realizations', color='grey', zorder=0, alpha=0.04)
+
+
+    ax.set_ylabel("Cases")  # , fontdict=label_font)
+    ax.set_xlabel("Year")  # , fontdict=label_font)
+    ax.set_xticks(np.arange(xaxis[0], xaxis[-1], 2))
+    ax.set_xlim(xaxis[0], xaxis[-1])
+    ax.set_ylim(bottom=0)
+    ax.tick_params(axis='both', which='major')  # , labelsize=20)
+
+    ax.legend()
+
