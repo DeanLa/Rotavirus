@@ -275,9 +275,18 @@ class Disease(object):
             self.sample_single(mini)
         self.save()
 
+    def ll_model(self, model):
+        return log_likelihood(model, self.ydata, self.sigma)
     def ll_now(self):
-        return log_likelihood(self.y_now, self.ydata, self.sigma)
+        return self.ll_model(self.y_now)
 
+    def best_run(self):
+        w = np.where(self.ll_history[:, 1, ] == self.mle)[0][0]
+        print("{} at iteration {}".format(self.mle, w))
+        try:
+            return self.yhat_history[w], self.state_z_history[w]
+        except IndexError:
+            return self.yhat_history[w]
     @property
     def no_likelihood(self):
         raise NotImplementedError
@@ -323,7 +332,8 @@ class Rota(Disease):
     def __init__(self, name, model, populate_values: dict, eq_func):
         # Rota Specific
         extra = {}
-        extra['sigma'] = np.array([15662, 31343, 40559, 19608, 6660]).reshape(5, 1)
+        # extra['sigma'] = np.array([15662, 31343, 40559, 19608, 6660]).reshape(5, 1) # Yearly
+        extra['sigma'] = np.array([2171, 4346, 5624, 2719, 923]).reshape(5, 1) / 3 # Weekly
         extra['state_0'] = collect_state_0(RotaData)
         extra.update(populate_values)
         # Disease
@@ -338,13 +348,7 @@ class Rota(Disease):
         z = COMP._make([-np.inf * np.ones((RotaData.J)).reshape(-1, 1) for _ in COMP._fields])
         return c, z
 
-    def best_run(self):
-        w = np.where(self.ll_history[:, 1, ] == self.mle)[0][0]
-        print("{} at iteration {}".format(self.mle, w))
-        try:
-            return self.yhat_history[w], self.state_z_history[w]
-        except IndexError:
-            return self.yhat_history[w]
+
 
     def run_model(self):
         resolution = self.resolution

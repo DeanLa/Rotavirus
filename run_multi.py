@@ -43,7 +43,7 @@ def run_multi_sample(name, subdir='', runs=10000):
     vars = [b1, b2, b3, b4, b5, offset]
     model = Model(vars)
 
-    extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 10,
+    extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 25,
              'resolution': 4, 'save_path':'./chains/{}/'.format(subdir)}
     try:
         os.mkdir('./chains/{}'.format(subdir))
@@ -58,7 +58,7 @@ def run_multi_sample(name, subdir='', runs=10000):
 
 if __name__ == '__main__':
     n = 16
-    subdir = 'b0209'
+    subdir = 'c0209'
     runs = 10000
     pool = multiprocessing.Pool(n)
     pool.starmap(run_multi_sample, zip([str(proc) for proc in range(n)],

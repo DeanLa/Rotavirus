@@ -10,7 +10,7 @@ def mse(x, y):
 
 def log_likelihood(model, data, sigma=57460, noise=np.inf):
     sigma = sigma.astype('int64')
-    sigma = np.sqrt((sigma ** 2) /52)
+    # sigma = np.sqrt((sigma ** 2) /52)
     diff = (model - data) ** 2
     diff[data > noise] = 0
     LL = -diff / (2 * sigma ** 2)
