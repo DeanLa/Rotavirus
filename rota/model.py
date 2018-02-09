@@ -83,6 +83,7 @@ class Disease(object):
     def __init__(self, name, model, populate_values, eq_func):
         self.name = name
         self.active = True
+        self.save_path = './'
         self.xdata = None
         self.ydata = None
         self.yshape = None
@@ -149,14 +150,16 @@ class Disease(object):
             setattr(self, k, v)
 
     def random_run(self):
+        self.autosave(every=20)
         logger.info('=' * 80)
         self.model.random()
         self.set_stochastics()
         try:
             logger.info('guess: {}'.format(self.model.values))
             y_star, _ = self.run_model()
+            self.y_now = y_star
             ll_star = self.ll_now()
-            if ll_star < -130:
+            if ll_star > -140:
                 print (self.model.values)
                 print(ll_star)
                 print ()
@@ -169,6 +172,7 @@ class Disease(object):
             self.ll_history = np.vstack((self.ll_history, np.array([np.nan, ll_star])))
         except Exception as e:
             logger.error('exception at model {} PROBABLY S-I-R fail'.format(self.name))
+        self.save()
 
 
 
@@ -267,7 +271,7 @@ class Disease(object):
         iter_over = iter_over.astype(int)
 
         for mini in tqdm(iter_over, desc=' ' * 50, position=2):
-            print(mini)
+            # print(mini)
             self.sample_single(mini, save_path)
         self.save(save_path)
 
@@ -289,12 +293,15 @@ class Disease(object):
     def turn_off(self):
         self.active = False
 
-    def save(self, path='./'):
-        save_mcmc(self, path)
-
-    def autosave(self, every=50, path='./'):
-        if len(self) % every == 0:
+    def save(self, path=None):
+        if path is None:
+            save_mcmc(self, self.save_path)
+        else:
             save_mcmc(self, path)
+
+    def autosave(self, every=50, path=None):
+        if len(self) % every == 0:
+            self.save(path)
 
     @classmethod
     def load(cls, path):
@@ -334,7 +341,10 @@ class Rota(Disease):
     def best_run(self):
         w = np.where(self.ll_history[:, 1, ] == self.mle)[0][0]
         print("{} at iteration {}".format(self.mle, w))
-        return self.yhat_history[w], self.state_z_history[w]
+        try:
+            return self.yhat_history[w], self.state_z_history[w]
+        except IndexError:
+            return self.yhat_history[w]
 
     def run_model(self):
         resolution = self.resolution
