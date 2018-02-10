@@ -43,7 +43,7 @@ def run_multi_sample(name, subdir='', runs=10000):
     vars = [b1, b2, b3, b4, b5, offset]
     model = Model(vars)
 
-    extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 25,
+    extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 50,
              'resolution': 4, 'save_path':'./chains/{}/'.format(subdir)}
     try:
         os.mkdir('./chains/{}'.format(subdir))
@@ -51,15 +51,15 @@ def run_multi_sample(name, subdir='', runs=10000):
         print ('folder exists will overwrite')
     mcmc = Rota('mcmc_mp_{}'.format(name), model, extra, rota_eq)
     mcmc.save()
-    for run in range(runs):
-        mcmc.sample(runs,500)
+    # for run in range(runs):
+    mcmc.sample(runs,500)
     return mcmc
 
 
 if __name__ == '__main__':
     n = 16
     subdir = 'c0209'
-    runs = 10000
+    runs = 15000
     pool = multiprocessing.Pool(n)
     pool.starmap(run_multi_sample, zip([str(proc) for proc in range(n)],
                                       n*[subdir],
