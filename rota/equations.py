@@ -87,6 +87,8 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
         c.S2[:, t] -= d.phi2 * lamda * c.S2[:, t - 1]
         c.S3[:, t] -= d.phi3 * lamda * c.S3[:, t - 1]
 
+        # Vaccinated
+
         # Infected
         I1 = d.phi1 * lamda * c.S1[:, t - 1]  # Helper I
         I2 = d.phi2 * lamda * c.S2[:, t - 1]  # Helper I

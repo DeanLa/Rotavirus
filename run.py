@@ -17,6 +17,7 @@ if __name__ == '__main__':
         b3 = Stochastic('b3', 0, 10, initial=1.6 * 1.5)
         b4 = Stochastic('b4', 0, 10, initial=1 * 1.5)
         b5 = Stochastic('b5', 0, 10, initial=0.336 * 1.5)
+        A = Stochastic('A', 0, 10, initial=5)
         offset = Stochastic('offset', 0, 10, initial=3, cyclic=True)
         vars = [b1, b2, b3, b4, b5, offset]
         model = Model(vars)
@@ -24,7 +25,7 @@ if __name__ == '__main__':
         extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 10,
                  'resolution': 4}
         with PrintElapsedTime("init mcmc"):
-            mcmc = Rota('mcmc', model, extra, rota_eq,)
+            mcmc = Rota('mcmc', model, extra, rota_eq, )
     else:
         mcmc = Rota.load('./mcmc180208.pkl')
     # print(log_likelihood(x.y_now, x.ydata, x.sigma))
@@ -32,14 +33,7 @@ if __name__ == '__main__':
     # fig.suptitle('{}  --- {}'.format(extra['resolution'], log_likelihood(x.y_now, x.ydata, x.sigma)))
     # plt.show()
     with PrintElapsedTime():
-        mcmc.sample(10000,250)
-
-
-
-
-
-
-
+        mcmc.sample(10000, 250)
 
     # r = list(r)
     # rU = COMP._make([np.hstack((a, b, c)) for a, b,c  in zip(r[0], r[1], r[2])])

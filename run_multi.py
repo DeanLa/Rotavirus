@@ -16,6 +16,7 @@ def run_multi_random(name, subdir='', runs=100):
     b3 = Stochastic('b3', 0, 2.5)
     b4 = Stochastic('b4', 0, 1)
     b5 = Stochastic('b5', 0, 0.5)
+    A = Stochastic('A', 0, 10, initial=5)
     offset = Stochastic('offset', 0, 10, cyclic=True)
     vars = [b1, b2, b3, b4, b5, offset]
     model = Model(vars)

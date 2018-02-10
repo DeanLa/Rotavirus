@@ -333,7 +333,7 @@ class Rota(Disease):
         # Rota Specific
         extra = {}
         # extra['sigma'] = np.array([15662, 31343, 40559, 19608, 6660]).reshape(5, 1) # Yearly
-        extra['sigma'] = np.array([2171, 4346, 5624, 2719, 923]).reshape(5, 1) / 3 # Weekly
+        extra['sigma'] = np.array([2171, 4346, 5624, 2719, 923]).reshape(5, 1) # Weekly
         extra['state_0'] = collect_state_0(RotaData)
         extra.update(populate_values)
         # Disease
