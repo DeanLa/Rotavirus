@@ -39,8 +39,8 @@ def state_z_to_state_0(c: COMP):
     return COMP._make([comp[:, -1] for comp in c])
 
 
-def seasonal(t, offset=0):
-    return 1 + np.cos(2 * np.pi * (t - offset))
+def seasonal(t, A, offset=0):
+    return 1 + A * np.cos(2 * np.pi * (t - offset))
 
 
 def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
@@ -71,7 +71,7 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
              d.psia2 * n.Ia2 + d.psim2 * n.Im2 + d.psis2 + n.Is2 + \
              d.psia3 * n.Ia3 + d.psim3 * n.Im3 + d.psis3 + n.Is3
         IC = nI.dot(d.C)
-        lamda = b * IC * seasonal(T, m.offset / 10) + low_force
+        lamda = b * IC * seasonal(T, m.A / 10, m.offset / 10) + low_force
         # Start Equations
         # Maternal Immunity
         c.M[0, t] += d.delta

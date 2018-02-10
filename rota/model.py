@@ -108,8 +108,8 @@ class Disease(object):
         self.d = len(self.values)
         self.equations = partial(eq_func, self)
 
-        self.sd_stop_after = 5000
-        self.scaling_stop_after = 5000
+        self.sd_stop_after = 3000
+        self.scaling_stop_after = 3000
         self.populate(populate_values)
         self.y_now, self.state_z = self.run_model()
         # Chains
@@ -132,7 +132,7 @@ class Disease(object):
         for stoch in self.model.stochastics:
             setattr(self, stoch.name, stoch.value)
 
-    def compute_jump(self, scaling_stop_after=10000, sd_stop_after=10000):
+    def compute_jump(self):
         # # Model Specific
         # self.scaling_factor = np.array([2.4 / np.sqrt(self.d)])
         # self.cov = np.diag(np.ones(self.d))
@@ -366,10 +366,10 @@ class Rota(Disease):
         self.xshape = self.xdata.shape
         # assert sim1 of x is like y
 
-    def compute_jump(self, scaling_stop_after=10000, sd_stop_after=10000):
+    def compute_jump(self):
         # Model Specific
         self.scaling_factor = np.array([2.4 / np.sqrt(self.d)])
-        cov = [1, 1, 0.5, 0.2, 0.01, 1]
+        cov = [1, 1, 0.5, 0.2, 0.01, 1, 1]
         self.cov = np.diag(cov)
 
         # After updating
