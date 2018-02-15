@@ -1,3 +1,5 @@
+import numpy as np
+
 from rota import *
 import matplotlib.pyplot as plt
 
@@ -121,7 +123,7 @@ def plot_stoch_vars(mcmc, which=None):
             ax.set_xticks(ax.get_xticks()[::2])  # X 1
             ax.set_yticks(ax.get_yticks()[::2])  # Y 1
             ax.set_xlim([xaxis[0], xaxis[-1]])
-            ax.set_xlim([0,10])
+            ax.set_ylim([0,10])
 
         except Exception as e:
             print(e)

@@ -9,8 +9,8 @@ from rota import COMP, logger, RotaData, concat_nums
 def collect_state_0(fixed):
     dist = fixed().age_dist
     M = 0.0025
-    R = 0.83
-    S = 0.16
+    R = 0.8
+    S = 0.1
     I = 1 - M - S - R
     c = COMP._make(dist * 0 for _ in COMP._fields)
     assert type(c) == COMP
@@ -45,7 +45,7 @@ def seasonal(t, A, offset=0):
 
 def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
     logger.info("Running Model")
-    low_force = 10e-9
+    low_force = 10e-8
     m = mcmc
     if start is None: start = m.start
     if end is None: end = m.end

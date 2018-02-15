@@ -3,21 +3,25 @@ import numpy as np
 import dill as pickle
 from rota import *
 
+
 # Math
 def mse(x, y):
     res = (x - y) ** 2
     return res.mean()
 
+
 def log_likelihood(model, data, sigma=57460, noise=np.inf):
     sigma = sigma.astype('int64')
     # sigma = np.sqrt((sigma ** 2) /52)
     diff = (model - data) ** 2
-    diff[data > noise] = 0
-    LL = -diff / (2 * sigma ** 2)
+    # diff[data > noise] = 0
+    LL = - diff / (2 * sigma ** 2)
     return LL.sum()
+
 
 def nums(scalar, amount):
     return np.ones(amount) * scalar
+
 
 def concat_nums(*args):
     n = len(args)
@@ -25,8 +29,9 @@ def concat_nums(*args):
     iter = np.arange(0, n, 2)
     pairs = []
     for i in iter:
-        pairs.append(nums(args[i],args[i+1]))
+        pairs.append(nums(args[i], args[i + 1]))
     return np.concatenate(pairs)
+
 
 def gelman_rubin(chains):
     """http://blog.stata.com/2016/05/26/gelman-rubin-convergence-diagnostic-using-multiple-chains/"""
@@ -48,8 +53,10 @@ def gelman_rubin(chains):
     R = np.sqrt(V / W)
     return R
 
+
 def is_invertible(a):
     return a.shape[0] == a.shape[1] and np.linalg.matrix_rank(a) == a.shape[0]
+
 
 # I/O Operations
 def save_mcmc(obj, path='./'):
@@ -68,7 +75,6 @@ def save_mcmc(obj, path='./'):
     return obj.name
 
 
-def load_mcmc(path='./mcmc180208.pkl'):
+def load_mcmc(path):
     with open(path, 'rb') as f:
         return pickle.load(f)
-

@@ -78,6 +78,9 @@ class Model(object):
     def __repr__(self):
         return self.__str__()
 
+    def __len__(self):
+        return len (self.names)
+
 
 class Disease(object):
     def __init__(self, name, model, populate_values, eq_func):
@@ -336,6 +339,7 @@ class Rota(Disease):
         extra['sigma'] = np.array([2171, 4346, 5624, 2719, 923]).reshape(5, 1) # Weekly
         extra['state_0'] = collect_state_0(RotaData)
         extra.update(populate_values)
+        self.A = 10
         # Disease
         super(Rota, self).__init__(name, model, extra, eq_func)
 
@@ -369,7 +373,8 @@ class Rota(Disease):
     def compute_jump(self):
         # Model Specific
         self.scaling_factor = np.array([2.4 / np.sqrt(self.d)])
-        cov = [1, 1, 0.5, 0.2, 0.01, 1, 1]
+        # cov = [1, 1, 0.5, 0.2, 0.01, 1, 1]
+        cov = np.ones(len(self.model))
         self.cov = np.diag(cov)
 
         # After updating
