@@ -47,10 +47,13 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
     logger.info("Running Model")
     low_force = 10e-8
     m = mcmc
-    if start is None: start = m.start
-    if end is None: end = m.end
-    if state_0 is None: state_0 = m.state_0
     d = RotaData(steps)
+    if start is None:
+        start = m.start
+    if end is None:
+        end = m.end
+    if state_0 is None:
+        state_0 = m.state_0
     timeline = np.arange(start, end, d.N)
     num_steps = len(timeline)
     c: COMP = COMP._make([np.zeros((d.J, num_steps)) for _ in COMP._fields])
@@ -83,11 +86,9 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
         c.S3[:, t] += d.omega2 * c.R2[:, t - 1]  # IN: Waning from R2
         c.S3[:, t] += d.omega3 * c.R3[:, t - 1]  # IN: Waning from R3
 
-        c.S1[:, t] -= d.phi1 * lamda * c.S1[:, t - 1]
-        c.S2[:, t] -= d.phi2 * lamda * c.S2[:, t - 1]
-        c.S3[:, t] -= d.phi3 * lamda * c.S3[:, t - 1]
-
-        # Vaccinated
+        c.S1[:, t] -= d.phi1 * lamda * c.S1[:, t - 1]  # OUT: Getting Sick
+        c.S2[:, t] -= d.phi2 * lamda * c.S2[:, t - 1]  # OUT: Getting Sick
+        c.S3[:, t] -= d.phi3 * lamda * c.S3[:, t - 1]  # OUT: Getting Sick
 
         # Infected
         I1 = d.phi1 * lamda * c.S1[:, t - 1]  # Helper I
@@ -113,6 +114,29 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
         c.Im3[:, t] -= d.gammam3 * c.Im3[:, t - 1]  # Recovered to3
         c.Is3[:, t] -= d.gammas3 * c.Is3[:, t - 1]  # Recovered to3
 
+        # Vaccinated
+        c.V1[:, t] -= d.phi1 * lamda * c.V1[:, t - 1] * d.reduct1  # OUT: Getting Sick
+        c.V2[:, t] -= d.phi1 * lamda * c.V2[:, t - 1] * d.reduct2  # OUT: Getting Sick
+        c.V3[:, t] -= d.phi1 * lamda * c.V3[:, t - 1] * d.reduct3  # OUT: Getting Sick
+
+        # Infected from V
+        Iv1 = d.phi1 * lamda * c.V1[:, t - 1] * d.reduct1  # Helper I
+        Iv2 = d.phi1 * lamda * c.V2[:, t - 1] * d.reduct2  # Helper I
+        Iv3 = d.phi1 * lamda * c.V3[:, t - 1] * d.reduct3  # Helper I
+        c.Iav[:, t] += d.rhoav1 * Iv1  # IN: Infected from S1
+        c.Imv[:, t] += d.rhomv1 * Iv1  # IN: Infected from S1
+        c.Isv[:, t] += d.rhosv1 * Iv1  # IN: Infected from S1
+        c.Iav[:, t] += d.rhoav2 * Iv2  # IN: Infected from S2
+        c.Imv[:, t] += d.rhomv2 * Iv2  # IN: Infected from S2
+        c.Isv[:, t] += d.rhosv2 * Iv2  # IN: Infected from S2
+        c.Iav[:, t] += d.rhoav3 * Iv3  # IN: Infected from S3
+        c.Imv[:, t] += d.rhomv3 * Iv3  # IN: Infected from S3
+        c.Isv[:, t] += d.rhosv3 * Iv3  # IN: Infected from S3
+
+        c.Iav[:, t] -= d.gammaav * c.Iav[:, t - 1]  # Recovered to R1
+        c.Imv[:, t] -= d.gammamv * c.Imv[:, t - 1]  # Recovered to R1
+        c.Isv[:, t] -= d.gammasv * c.Isv[:, t - 1]  # Recovered to R1
+
         # Recovered
         c.R1[:, t] -= d.omega1 * c.R1[:, t - 1]  # OUT: Waning to S2
         c.R2[:, t] -= d.omega2 * c.R2[:, t - 1]  # OUT: Waning to S3
@@ -127,12 +151,25 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
         c.R3[:, t] += d.gammaa3 * c.Ia3[:, t - 1]  # Recovered from Ia3
         c.R3[:, t] += d.gammam3 * c.Im3[:, t - 1]  # Recovered from Im3
         c.R3[:, t] += d.gammas3 * c.Is3[:, t - 1]  # Recovered from Is3
+        # From Iv
+        c.R1[:, t] += d.gammaav * c.Iav[:, t - 1]  # Recovered from Iav
+        c.R1[:, t] += d.gammamv * c.Imv[:, t - 1]  # Recovered from Imv
+        c.R1[:, t] += d.gammasv * c.Isv[:, t - 1]  # Recovered from Isv
 
         # Death and Aging
         for i in iter_comps:
             c[i][:-1, t] -= d.d[:-1] * c[i][:-1, t - 1]  # OUT
             c[i][1:, t] += d.d[:-1] * c[i][:-1, t - 1]  # IN
             c[i][:, t] -= d.mu * c[i][:, t - 1]  # Death
+
+        if T >= 9:
+            # Pass coverage rate to Vaccine Groupd
+            c.M[1, t] -= d.d[0] * c.M[0, t - 1] * d.cover1
+            c.V1[1, t] += d.d[0] * c.M[0, t - 1] * d.cover1
+            c.V1[2, t] -= d.d[1] * c.V1[1, t - 1] * d.cover2
+            c.V2[2, t] += d.d[1] * c.V2[1, t - 1] * d.cover2
+            c.V2[3, t] -= d.d[2] * c.V2[2, t - 1] * d.cover3
+            c.V3[3, t] += d.d[2] * c.V3[2, t - 1] * d.cover3
 
         pop = sum([comp[:, t] for comp in c]).sum()
         if (pop < -0.5):

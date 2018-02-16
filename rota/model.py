@@ -373,7 +373,6 @@ class Rota(Disease):
     def compute_jump(self):
         # Model Specific
         self.scaling_factor = np.array([2.4 / np.sqrt(self.d)])
-        # cov = [1, 1, 0.5, 0.2, 0.01, 1, 1]
         cov = np.ones(len(self.model))
         self.cov = np.diag(cov)
 

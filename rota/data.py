@@ -57,6 +57,10 @@ class RotaData(ClinicalData):
         self.rhoa2, self.rhom2, self.rhos2 = 0.75, 0.22, 0.03
         self.rhoa3, self.rhom3, self.rhos3 = 0.8, 0.2, 0.0
 
+        # Save for Iv
+        self.rhoav1, self.rhomv1, self.rhosv1 = 0.53, 0.34, 0.13
+        self.rhoav2, self.rhomv2, self.rhosv2 = 0.75, 0.22, 0.03
+        self.rhoav3, self.rhomv3, self.rhosv3 = 0.8, 0.2, 0.0
         # Duration of infection (days)
         high = self.N * (365 / self.long_infection_duration)
         low = self.N * (365 / self.short_infection_duration)
@@ -69,6 +73,9 @@ class RotaData(ClinicalData):
         self.gammaa3 = low
         self.gammam3 = low
         self.gammas3 = low
+        self.gammaav = low
+        self.gammamv = low
+        self.gammasv = low
 
         # Relative infectiousness
         self.psia1, self.psim1, self.psis1 = 0.1, 1.0, 1.0
@@ -86,7 +93,16 @@ class RotaData(ClinicalData):
         self.omega2 = self.N * (12 / 24)
         self.omega3 = self.omega2
 
-        # State_0
+        # Coverate
+        self.cover1 = 1
+        self.cover2 = 1
+        self.cover3 = 1
+
+        self.reduct1 = 0
+        self.reduct2 = 0
+        self.reduct3 = 0
+        # Vaccine Reduction
+
 
         # self.age_dist = self.a / self.a.sum()
         #

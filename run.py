@@ -19,7 +19,7 @@ if __name__ == '__main__':
         b5 = Stochastic('b5', 0, 10, initial=0.336 * 1.5)
         A = Stochastic('A', 0, 10, initial=5)
         offset = Stochastic('offset', 0, 10, initial=3, cyclic=True)
-        vars = [b1, b2, b3, b4, b5, A, offset]
+        vars = [b1, b2, b3, b4, b5, offset]
         model = Model(vars)
         # model.update([0.0000003, 0.0000005, 0.00000016, 4e-7, 3.36e-8, 1])
         extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 10,
