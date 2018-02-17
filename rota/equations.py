@@ -115,14 +115,14 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
         c.Is3[:, t] -= d.gammas3 * c.Is3[:, t - 1]  # Recovered to3
 
         # Vaccinated
-        c.V1[:, t] -= d.phi1 * lamda * c.V1[:, t - 1] * d.reduct1  # OUT: Getting Sick
-        c.V2[:, t] -= d.phi1 * lamda * c.V2[:, t - 1] * d.reduct2  # OUT: Getting Sick
-        c.V3[:, t] -= d.phi1 * lamda * c.V3[:, t - 1] * d.reduct3  # OUT: Getting Sick
+        c.V1[:, t] -= lamda * c.V1[:, t - 1] * d.reduct1  # OUT: Getting Sick
+        c.V2[:, t] -= lamda * c.V2[:, t - 1] * d.reduct2  # OUT: Getting Sick
+        c.V3[:, t] -= lamda * c.V3[:, t - 1] * d.reduct3  # OUT: Getting Sick
 
         # Infected from V
-        Iv1 = d.phi1 * lamda * c.V1[:, t - 1] * d.reduct1  # Helper I
-        Iv2 = d.phi1 * lamda * c.V2[:, t - 1] * d.reduct2  # Helper I
-        Iv3 = d.phi1 * lamda * c.V3[:, t - 1] * d.reduct3  # Helper I
+        Iv1 = lamda * c.V1[:, t - 1] * d.reduct1  # Helper I
+        Iv2 = lamda * c.V2[:, t - 1] * d.reduct2  # Helper I
+        Iv3 = lamda * c.V3[:, t - 1] * d.reduct3  # Helper I
         c.Iav[:, t] += d.rhoav1 * Iv1  # IN: Infected from S1
         c.Imv[:, t] += d.rhomv1 * Iv1  # IN: Infected from S1
         c.Isv[:, t] += d.rhosv1 * Iv1  # IN: Infected from S1
@@ -165,7 +165,10 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
         if T >= 9:
             # Pass coverage rate to Vaccine Groupd
             c.M[1, t] -= d.d[0] * c.M[0, t - 1] * d.cover1
+            c.S1[1, t] -= d.d[0] * c.S1[0, t - 1] * d.cover1
             c.V1[1, t] += d.d[0] * c.M[0, t - 1] * d.cover1
+            c.V1[1, t] += d.d[0] * c.S1[0, t - 1] * d.cover1
+
             c.V1[2, t] -= d.d[1] * c.V1[1, t - 1] * d.cover2
             c.V2[2, t] += d.d[1] * c.V2[1, t - 1] * d.cover2
             c.V2[3, t] -= d.d[2] * c.V2[2, t - 1] * d.cover3

@@ -74,8 +74,8 @@ class RotaData(ClinicalData):
         self.gammam3 = low
         self.gammas3 = low
         self.gammaav = low
-        self.gammamv = low
-        self.gammasv = low
+        self.gammamv = high
+        self.gammasv = high
 
         # Relative infectiousness
         self.psia1, self.psim1, self.psis1 = 0.1, 1.0, 1.0
