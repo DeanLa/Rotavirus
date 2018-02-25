@@ -163,20 +163,20 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
             c[i][:, t] -= d.mu * c[i][:, t - 1]  # Death
 
         if T >= 9:
-            # Pass coverage rate to Vaccine Groupd
-            c.M[1, t] -= d.d[0] * c.M[0, t - 1] * d.cover1
-            c.S1[1, t] -= d.d[0] * c.S1[0, t - 1] * d.cover1
-            c.V1[1, t] += d.d[0] * c.M[0, t - 1] * d.cover1
-            c.V1[1, t] += d.d[0] * c.S1[0, t - 1] * d.cover1
+            # Pass coverage rate to Vaccine Grouped
+            c.M[1, t] -= m.d[0] * c.M[0, t - 1] * m.cover1
+            c.S1[1, t] -= m.d[0] * c.S1[0, t - 1] * m.cover1
+            c.V1[1, t] += m.d[0] * c.M[0, t - 1] * m.cover1
+            c.V1[1, t] += m.d[0] * c.S1[0, t - 1] * m.cover1
 
-            c.V1[2, t] -= d.d[1] * c.V1[1, t - 1] * d.cover2
-            c.V2[2, t] += d.d[1] * c.V2[1, t - 1] * d.cover2
-            c.V2[3, t] -= d.d[2] * c.V2[2, t - 1] * d.cover3
-            c.V3[3, t] += d.d[2] * c.V3[2, t - 1] * d.cover3
+            c.V1[2, t] -= m.d[1] * c.V1[1, t - 1] * m.cover2
+            c.V2[2, t] += m.d[1] * c.V2[1, t - 1] * m.cover2
+            c.V2[3, t] -= m.d[2] * c.V2[2, t - 1] * m.cover3
+            c.V3[3, t] += m.d[2] * c.V3[2, t - 1] * m.cover3
 
         pop = sum([comp[:, t] for comp in c]).sum()
         if (pop < -0.5):
-            logger.error('explode equations {}'.format(pop))
+            logger.error('exploded equations {}'.format(pop))
             raise ArithmeticError
         # A = [comp[:, t] for comp in c]
         # print (sum(A))

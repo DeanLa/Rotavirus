@@ -18,10 +18,15 @@ formatter = logging.Formatter('%(levelname)-s, %(message)s')
 sh = logging.StreamHandler()
 sh.setFormatter(formatter)
 sh.setLevel(logging.CRITICAL)
+logger.addHandler(sh)
 
-fh = logging.FileHandler('./log/'+file_name, mode='a')
-fh.setFormatter(formatter)
-fh.setLevel(logging.DEBUG)
+try:
+    fh = logging.FileHandler('./log/'+file_name, mode='a')
+    fh.setFormatter(formatter)
+    fh.setLevel(logging.DEBUG)
+    logger.addHandler(fh)
+except:
+    print ("Could find log path. No file logging")
 
 
 # progress = logging.getLogger('progress')
@@ -29,6 +34,6 @@ fh.setLevel(logging.DEBUG)
 # pb.setFormatter(formatter)
 # pb.setLevel(logging.DEBUG)
 
-logger.addHandler(sh)
-logger.addHandler(fh)
+
+
 # progress.addHandler(pb)

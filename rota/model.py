@@ -109,6 +109,7 @@ class Disease(object):
         self.initial_values = self.model.values
         self.names = model.names
         self.d = len(self.values)
+        self.eq_func = eq_func
         self.equations = partial(eq_func, self)
 
         self.sd_stop_after = 3000
