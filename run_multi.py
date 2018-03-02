@@ -40,9 +40,9 @@ def run_multi_sample(name, subdir='', runs=10000, load=False):
     b3 = Stochastic('b3', 0, 10)
     b4 = Stochastic('b4', 0, 10)
     b5 = Stochastic('b5', 0, 10)
-    # A = Stochastic('A', 0, 10)
+    A = Stochastic('A', 0, 10)
     offset = Stochastic('offset', 0, 10, cyclic=True)
-    vars = [b1, b2, b3, b4, b5, offset]
+    vars = [b1, b2, b3, b4, b5, A, offset]
     model = Model(vars)
 
     extra = {'start': 0, 'end': 9, 'scaling_factor': 0.2, 'years_prior': 25,
@@ -60,13 +60,13 @@ def run_multi_sample(name, subdir='', runs=10000, load=False):
 
 if __name__ == '__main__':
     n = 12
-    subdir = '0215Final'
+    subdir = '0302c'
     runs = 15000
     pool = multiprocessing.Pool(n)
     pool.starmap(run_multi_sample, zip([str(proc) for proc in range(n)],
                                        n * [subdir],
                                        n * [runs],
-                                       n * [True]))
+                                       n * [False]))
     pool.close()
     pool.join()
 

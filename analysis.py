@@ -12,7 +12,7 @@ from rota import *
 # print (len(mcmc))
 # plt.tight_layout()
 # plt.show()
-folder = '0216Final'
+folder = '0302c'
 fig, ax = plt.subplots(7)
 mymax = -np.inf
 best_model = -1
