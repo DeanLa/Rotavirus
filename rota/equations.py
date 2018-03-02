@@ -45,7 +45,7 @@ def seasonal(t, A, offset=0):
 
 def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
     logger.info("Running Model")
-    low_force = 10e-8
+    low_force = 0  # 10e-8
     m = mcmc
     d = RotaData(steps)
     if start is None:
@@ -74,7 +74,8 @@ def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):
              d.psia2 * n.Ia2 + d.psim2 * n.Im2 + d.psis2 + n.Is2 + \
              d.psia3 * n.Ia3 + d.psim3 * n.Im3 + d.psis3 + n.Is3
         IC = nI.dot(d.C)
-        lamda = b * IC * seasonal(T, m.A / 10, m.offset / 10) + low_force
+        # lamda = b * seasonal(T, m.A / 10, m.offset / 10) * IC + low_force
+        lamda = max(low_force, b * seasonal(T, m.A / 10, m.offset / 10)) * IC
         # Start Equations
         # Maternal Immunity
         c.M[0, t] += d.delta

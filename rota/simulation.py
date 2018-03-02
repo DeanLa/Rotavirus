@@ -10,7 +10,9 @@ class Simulation(object):
     def __init__(self, mcmc: Disease, simulations: np.array):
         self.mcmc = mcmc
         self.mcmc.tally = 5000
-        np.random.randint(self.mcmc.tally, len(self.mcmc)-1, size = simulations)
+        self.simulations = simulations
+        self.n_simulations = len(simulations)
+        self.choices = np.random.randint(self.mcmc.tally, len(self.mcmc)-1, size = self.n_simulations)
         self.start = self.mcmc.end
         self.end = self.start + 15
         self.eq_func = self.mcmc.eq_func
@@ -20,13 +22,13 @@ class Simulation(object):
         self.cover2 = 1
         self.cover3 = 1
 
-        self.simulated_names = ['b1','b2','b3','b4','b5','offset'
-                                'reduct1','reduct2','reduct3',
+        self.simulated_names = mcmc.model.names.extend(
+                                ['reduct1','reduct2','reduct3',
                                 'rhoav1','rhomv1','rhosv1',
                                 'rhoav2','rhomv2','rhosv2',
-                                'rhoav3','rhomv3','rhosv3']
+                                'rhoav3','rhomv3','rhosv3'])
 
-        self.chain_subset = self.mcmc
+        self.chain_subset = np.hstack((self.mcmc.chain[self.choices,:],self.simulations))
     def run_model(self):
         pass
 
