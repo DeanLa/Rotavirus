@@ -40,7 +40,7 @@ def state_z_to_state_0(c: COMP):
 
 
 def seasonal(t, A, offset=0):
-    return A + A * np.cos(2 * np.pi * (t - offset))
+    return A + np.cos(2 * np.pi * (t - offset))
 
 
 def rota_eq(mcmc, steps=None, start=None, end=None, state_0=None):

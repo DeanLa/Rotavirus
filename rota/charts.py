@@ -180,7 +180,7 @@ def plot_likelihood_cloud(mcmc: Disease, max_lines=100):
     ax.legend(bbox_to_anchor=(0.5, -0.05), ncol=2, mode='expand')
 
     length = len(mcmc) - mcmc.tally
-    every = length // max_lines
+    every = max(1,length // max_lines)
     for curr_model in mcmc.yhat_history[mcmc.tally::every]:
         ax.plot(xaxis, curr_model.sum(axis=0), label='Model Realizations', color='grey', zorder=0, alpha=0.04)
 

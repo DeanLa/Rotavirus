@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # from funcs import log_likelihood
-from funcs import log_likelihood
 from rota import *
 
 if __name__ == '__main__':
@@ -39,9 +38,9 @@ if __name__ == '__main__':
     # fig.suptitle('{}  --- {}'.format(extra['resolution'], log_likelihood(x.y_now, x.ydata, x.sigma)))
     # plt.show()
     best = mcmc.yhat_history[0]
-    fig, ax = plot_against_data(best, mcmc.ydata)
+    fig, ax = plot_against_data(best, mcmc.ydata_cases)
     fig, ax = plot_difference(best, mcmc.ydata)
-    ll = log_likelihood(best,mcmc.ydata,mcmc.sigma)
+    # ll = log_likelihood(best,mcmc.ydata,mcmc.sigma)
     fig.suptitle('{:.0f}      {}'.format(ll, inc))
     print(ll)
     plt.show()

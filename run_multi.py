@@ -60,7 +60,7 @@ def run_multi_sample(name, subdir='', runs=10000, load=False):
 
 if __name__ == '__main__':
     n = 12
-    subdir = '0302c'
+    subdir = '0303c'
     runs = 15000
     pool = multiprocessing.Pool(n)
     pool.starmap(run_multi_sample, zip([str(proc) for proc in range(n)],

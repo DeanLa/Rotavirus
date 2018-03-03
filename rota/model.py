@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from scipy.stats import norm, uniform, multivariate_normal as multinorm
 from functools import partial
-from rota import rota_eq, RotaData, collect_state_0, COMP, state_z_to_state_0, logger
+from rota import rota_eq, RotaData, collect_state_0, COMP, state_z_to_state_0, logger, normal_pct_log_likelihood
 from rota.funcs import save_mcmc, load_mcmc, log_likelihood, beta_log_likelihood, normal_log_likelihood
 
 
@@ -338,12 +338,11 @@ class Disease(object):
 
 
 class Rota(Disease):
-
     def __init__(self, name, model, populate_values: dict, eq_func):
         # Rota Specific
         extra = {}
         # extra['sigma'] = np.array([15662, 31343, 40559, 19608, 6660]).reshape(5, 1) # Yearly
-        extra['sigma'] = np.array([2171, 4346, 5624, 2719, 923]).reshape(5, 1) / 100  # Weekly
+        extra['sigma'] = np.array([2171, 4346, 5624, 2719, 923]).reshape(5, 1) / 1  # Weekly
         extra['state_0'] = collect_state_0(RotaData)
         extra['alpha'] = 42.34
         extra['beta'] = 260
@@ -371,10 +370,11 @@ class Rota(Disease):
         return c, state_z
 
     def get_data(self):
-        self.ydata = np.genfromtxt('data/gastro-cases.csv', delimiter=',', skip_header=1).T
+        self.ydata = np.genfromtxt('data/cases.csv', delimiter=',', skip_header=1).T
         self.xdata = np.arange(2003, 2012, 1 / 52)
         self.yshape = self.ydata.shape
         self.xshape = self.xdata.shape
+        # self.ydata_cases = np.genfromtxt('data/cases.csv', delimiter=',', skip_header=1).T
         # assert sim1 of x is like y
 
     def compute_jump(self):
@@ -386,11 +386,16 @@ class Rota(Disease):
         # After updating
         self.sd = self.scaling_factor ** 2 * self.cov
 
-    def ll_model(self, model, mode='beta'):
+    def ll_model(self, model, mode='pct'):
         if mode == 'beta':
             return beta_log_likelihood(model, self.ydata, self.alpha, self.beta)
         if mode == 'normal':
             return normal_log_likelihood(model, self.ydata, self.sigma)
+        if mode == 'pct':
+            return normal_pct_log_likelihood(model, self.ydata, self.sigma)
+        else:
+            print('unknown likelihood function')
+            raise NotImplementedError('unknown likelihood function')
 
 
 class Chains(object):

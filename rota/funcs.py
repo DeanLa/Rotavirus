@@ -19,11 +19,23 @@ def normal_log_likelihood(model, data, sigma=57460, noise=np.inf):
     return LL.sum()
 
 
+def normal_pct_log_likelihood(model, data, sigma=57460, noise=np.inf):
+    sigma = sigma.astype('int64')
+    r = sigma.T / data.max(axis=1)
+    sigma = r.T * data
+    # sigma = np.sqrt((sigma ** 2) /52)
+    diff = (model - data) ** 2
+    # diff[data > noise] = 0
+    LL = - diff / (2 * sigma ** 2)
+    return LL.sum()
+
+
 def beta_log_likelihood(model, data, alpha=42.34, beta=260):
     '''https://en.wikipedia.org/wiki/Beta_distribution#Maximum_likelihood'''
     X = model / data
-    LL = (alpha - 1)*np.log(X) + (beta-1)*np.log(1-X)
-    LL[:2,:] *= 1772.38/2195.78
+    X[:2, :] *= 1772.38 / 2195.78
+    X[X > 1] = 1
+    LL = (alpha - 1) * np.log(X) + (beta - 1) * np.log(1 - X)
     return LL.sum()
 
 
