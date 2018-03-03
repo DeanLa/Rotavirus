@@ -67,19 +67,42 @@ def plot_against_data(model, data=None, **kwargs):
     axs = np.hstack(axs)
     xaxis = np.arange(data.shape[1])
     for i, ax in enumerate(axs[:-1]):
-        ax.plot(xaxis, data[i, :], label='Data', color='red')
+        ax.scatter(xaxis, data[i, :], label='Data', color='red')
         ax.plot(xaxis, model[i, :], label='Model', color='k')
         ax.set_title(titles[i])
         ax.legend(bbox_to_anchor=(0.5, -0.05), ncol=2, mode='expand')
 
     ax = axs[-1]
-    ax.plot(xaxis, data.sum(axis=0), label='Data', color='red')
+    ax.scatter(xaxis, data.sum(axis=0), label='Data', color='red')
     ax.plot(xaxis, model.sum(axis=0), label='Model', color='k')
     ax.set_title('Total')
     ax.legend(bbox_to_anchor=(0.5, -0.05), ncol=2, mode='expand')
 
     return fig, ax
 
+
+def plot_difference(model, data=None, **kwargs):
+    if data is None:
+        data = model.ydata
+    if isinstance(model, Disease):
+        model, _ = model.best_run()
+    titles = ['Age 0-1', 'Age 1-2', 'Age 2-5', 'Age 5-15', 'Age >15', 'Total']
+    fig, axs = plt.subplots(2, 3, figsize=(20, 9))
+    axs = np.hstack(axs)
+    xaxis = np.arange(data.shape[1])
+    for i, ax in enumerate(axs[:-1]):
+        ax.scatter(xaxis, data[i, :], label='Data', color='red')
+        ax.plot(xaxis, (model[i, :] - data[i, :])**2, label='Model', color='k')
+        ax.set_title(titles[i])
+        ax.legend(bbox_to_anchor=(0.5, -0.05), ncol=2, mode='expand')
+
+    ax = axs[-1]
+    ax.scatter(xaxis, data.sum(axis=0), label='Data', color='red')
+    ax.plot(xaxis, (model.sum(axis=0) - data.sum(axis=0)) ** 2, label='Model', color='k')
+    ax.set_title('Total')
+    ax.legend(bbox_to_anchor=(0.5, -0.05), ncol=2, mode='expand')
+
+    return fig, ax
 
 # MCMC
 def plot_stoch_vars(mcmc, dist_from=None, chain_from=None):

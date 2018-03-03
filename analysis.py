@@ -12,33 +12,34 @@ from rota import *
 # print (len(mcmc))
 # plt.tight_layout()
 # plt.show()
-folder = '0302c'
-fig, ax = plt.subplots(7)
-mymax = -np.inf
-best_model = -1
-for i in range(12):
-    m = Rota.load('./chains/{}/mcmc_mp_{}.pkl'.format(folder,i))
-    print('=' * 80)
-    print(m.name)
-    print("Length {}".format(len(m)))
-    mle = m.mle
-    print("MLE: {}".format(mle))
-    if mle > mymax:
-        print ("WHAT")
-        mymax = mle
-        best_model = i
-    if mle > -150: print('*' * 50)
-    best, _ = m.best_run()
-    for j in range(6):
-        ax[j].plot(m.chain[0:, j])
-# plt.show()
-print('=' * 80)
-print('=' * 80)
+# folder = '0302c'
+# fig, ax = plt.subplots(7)
+# mymax = -np.inf
+# best_model = -1
+# for i in range(12):
+#     m = Rota.load('./chains/{}/mcmc_mp_{}.pkl'.format(folder,i))
+#     print('=' * 80)
+#     print(m.name)
+#     print("Length {}".format(len(m)))
+#     mle = m.mle
+#     print("MLE: {}".format(mle))
+#     if mle > mymax:
+#         print ("WHAT")
+#         mymax = mle
+#         best_model = i
+#     if mle > -150: print('*' * 50)
+#     best, _ = m.best_run()
+#     for j in range(6):
+#         ax[j].plot(m.chain[0:, j])
+# # plt.show()
+# print('=' * 80)
+# print('=' * 80)
 
 # for i in range(16):
 #     m=Rota.load('./chains/0209b/mcmc_mp_{}.pkl'.format(i))
-print('BEST {}'.format(best_model))
-m = Rota.load('./chains/{}/mcmc_mp_{}.pkl'.format(folder, best_model))
+# print('BEST {}'.format(best_model))
+# m = Rota.load('./chains/Final.pkl'.format(folder, best_model))
+m = Rota.load('./chains/Final.pkl')
 best, _ = m.best_run()
 print(best.sum(axis=1) / m.ydata.sum(axis=1))
 print(best.sum() / m.ydata.sum())

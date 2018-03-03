@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import norm, uniform, multivariate_normal as multinorm
 from functools import partial
 from rota import rota_eq, RotaData, collect_state_0, COMP, state_z_to_state_0, logger
-from rota.funcs import save_mcmc, load_mcmc, log_likelihood
+from rota.funcs import save_mcmc, load_mcmc, log_likelihood, beta_log_likelihood, normal_log_likelihood
 
 
 # logger = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ class Model(object):
         return self.__str__()
 
     def __len__(self):
-        return len (self.names)
+        return len(self.names)
 
 
 class Disease(object):
@@ -98,6 +98,8 @@ class Disease(object):
         # Constants
         self.accept_hat = 0.23
         self.sigma = 1
+        self.alpha = 1
+        self.beta = 1
         self.state_0 = None
         self.start = None
         self.years_prior = None
@@ -164,9 +166,9 @@ class Disease(object):
             self.y_now = y_star
             ll_star = self.ll_now()
             if ll_star > -140:
-                print (self.model.values)
+                print(self.model.values)
                 print(ll_star)
-                print ()
+                print()
             logger.info('LL:    {}'.format(ll_star))
             # if ll_star < -(1e20):
             #     logger.warning('bad set for model {} with guess {}'.format(self.name, iteration))
@@ -177,8 +179,6 @@ class Disease(object):
         except Exception as e:
             logger.error('exception at model {} PROBABLY S-I-R fail'.format(self.name))
         self.save()
-
-
 
     def sample_single(self, recalculate=500):
         compute_scaling_factor = self.scaling_stop_after > len(self)
@@ -240,7 +240,8 @@ class Disease(object):
                     self.set_stochastics()
                     logger.info('guess: {}'.format(guess))
                     y_star, state_z = self.run_model()
-                    ll_star = log_likelihood(y_star, self.ydata, self.sigma)
+                    # ll_star = log_likelihood(y_star, self.ydata, self.sigma)
+                    ll_star = self.ll_model(y_star)
                     logger.info(str(ll_star))
                     if ll_star < -(1e20):
                         logger.warning('bad set for model {} with guess {}'.format(self.name, iteration))
@@ -279,8 +280,12 @@ class Disease(object):
             self.sample_single(mini)
         self.save()
 
-    def ll_model(self, model):
-        return log_likelihood(model, self.ydata, self.sigma)
+    def ll_model(self, model, mode='beta'):
+        if mode == 'beta':
+            return beta_log_likelihood(model, self.ydata, self.alpha, self.beta)
+        if mode == 'normal':
+            return normal_log_likelihood(model, self.ydata, self.sigma)
+
     def ll_now(self):
         return self.ll_model(self.y_now)
 
@@ -291,6 +296,7 @@ class Disease(object):
             return self.yhat_history[w], self.state_z_history[w]
         except IndexError:
             return self.yhat_history[w]
+
     @property
     def no_likelihood(self):
         raise NotImplementedError
@@ -337,8 +343,10 @@ class Rota(Disease):
         # Rota Specific
         extra = {}
         # extra['sigma'] = np.array([15662, 31343, 40559, 19608, 6660]).reshape(5, 1) # Yearly
-        extra['sigma'] = np.array([2171, 4346, 5624, 2719, 923]).reshape(5, 1) # Weekly
+        extra['sigma'] = np.array([2171, 4346, 5624, 2719, 923]).reshape(5, 1) / 100  # Weekly
         extra['state_0'] = collect_state_0(RotaData)
+        extra['alpha'] = 42.34
+        extra['beta'] = 260
         extra.update(populate_values)
         self.A = 10
         # Disease
@@ -353,8 +361,6 @@ class Rota(Disease):
         z = COMP._make([-np.inf * np.ones((RotaData.J)).reshape(-1, 1) for _ in COMP._fields])
         return c, z
 
-
-
     def run_model(self):
         resolution = self.resolution
         prior = self.start - self.years_prior
@@ -365,7 +371,7 @@ class Rota(Disease):
         return c, state_z
 
     def get_data(self):
-        self.ydata = np.genfromtxt('data/cases.csv', delimiter=',', skip_header=1).T
+        self.ydata = np.genfromtxt('data/gastro-cases.csv', delimiter=',', skip_header=1).T
         self.xdata = np.arange(2003, 2012, 1 / 52)
         self.yshape = self.ydata.shape
         self.xshape = self.xdata.shape
@@ -379,6 +385,12 @@ class Rota(Disease):
 
         # After updating
         self.sd = self.scaling_factor ** 2 * self.cov
+
+    def ll_model(self, model, mode='beta'):
+        if mode == 'beta':
+            return beta_log_likelihood(model, self.ydata, self.alpha, self.beta)
+        if mode == 'normal':
+            return normal_log_likelihood(model, self.ydata, self.sigma)
 
 
 class Chains(object):

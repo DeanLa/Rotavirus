@@ -10,13 +10,24 @@ def mse(x, y):
     return res.mean()
 
 
-def log_likelihood(model, data, sigma=57460, noise=np.inf):
+def normal_log_likelihood(model, data, sigma=57460, noise=np.inf):
     sigma = sigma.astype('int64')
     # sigma = np.sqrt((sigma ** 2) /52)
     diff = (model - data) ** 2
     # diff[data > noise] = 0
     LL = - diff / (2 * sigma ** 2)
     return LL.sum()
+
+
+def beta_log_likelihood(model, data, alpha=42.34, beta=260):
+    '''https://en.wikipedia.org/wiki/Beta_distribution#Maximum_likelihood'''
+    X = model / data
+    LL = (alpha - 1)*np.log(X) + (beta-1)*np.log(1-X)
+    LL[:2,:] *= 1772.38/2195.78
+    return LL.sum()
+
+
+log_likelihood = beta_log_likelihood
 
 
 def nums(scalar, amount):
